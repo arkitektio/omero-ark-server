@@ -184,6 +184,22 @@ AUTHENTIKATE = {
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{conf.redis.host}:{conf.redis.port}/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient"
+        },
+        "KEY_PREFIX": "omero_ark_cache"
+    }
+}
+
+
+CACHE_TTL_DEFAULT =  60 * 15
+
+
+
 LANGUAGE_CODE = "en-us"
 
 TIME_ZONE = "UTC"

@@ -4,8 +4,11 @@ from django.http import HttpResponseForbidden, StreamingHttpResponse
 from .decorators import omero_connected
 from django.http import HttpResponse, Http404
 from .conn import get_conn
+from django.conf import settings
+from django.views.decorators.cache import cache_page
 
 
+CACHE_TTL = getattr(settings, 'CACHE_TTL_DEFAULT', 60 * 15)  # 15 minutes
 
 
 import logging
@@ -64,6 +67,7 @@ def _render_thumbnail(id, size=None):
 
 
 @omero_connected
+@cache_page(CACHE_TTL)
 def render_thumbnail(request, id):
     """
     Returns an HttpResponse wrapped jpeg with the rendered thumbnail for image

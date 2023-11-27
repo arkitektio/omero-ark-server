@@ -52,6 +52,12 @@ def NeedsScopes(scopes: str | list[str]) -> Type[HasScopes]:
 class Query:
     omero_users: list[types.OmeroUser] = strawberry.django.field(extensions=[])
     projects: list[types.Project] = strawberry.field(resolver=queries.projects)
+    project = strawberry.field(resolver=queries.project)
+    image = strawberry.field(resolver=queries.image)
+    dataset = strawberry.field(resolver=queries.dataset)
+    datasets = strawberry.field(resolver=queries.datasets)
+    images = strawberry.field(resolver=queries.images)
+    
     me: types.User = strawberry.field(resolver=queries.me)
     
 

@@ -1,5 +1,5 @@
 """
-URL configuration for mikro_server project.
+URL configuration for test_project project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.2/topics/http/urls/
@@ -14,14 +14,11 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path
-from strawberry.django.views import AsyncGraphQLView
-from django.urls import include
-from .schema import schema
+from django.urls import re_path, path
+from . import views
+
+app_name = "bridge"
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-    path("graphql", AsyncGraphQLView.as_view(schema=schema)),
-    path("api/", include("bridge.urls")),
+    path("thumbnails/<id>/", views.render_thumbnail, name="render_thumbnail"),
 ]

@@ -16,3 +16,6 @@ class OmeroUserInputModel(BaseModel):
 class OmerUserInput:
     username: str
     password: str
+
+
+

@@ -37,6 +37,16 @@ class Image:
     def name(self) -> str:
         return self.value.getName()
     
+
+    @strawberry.field
+    def description(self) -> str:
+        return self.value.getDescription()
+    
+    @strawberry.field
+    def tags(self) -> list[str]:
+        return ["fake"]
+
+    
     @strawberry.field
     def id(self) -> str:
         return self.value.getId()
@@ -70,6 +80,10 @@ class Dataset:
         return self.value.getDescription()
     
     @strawberry.field
+    def tags(self) -> list[str]:
+        return ["fake"]
+    
+    @strawberry.field
     def images(self) -> list[Image]:
         return [Image(value=i) for i in self.value.listChildren()]
     
@@ -89,6 +103,10 @@ class Project:
     @strawberry.field
     def name(self) -> str:
         return self.value.getName()
+    
+    @strawberry.field
+    def tags(self) -> list[str]:
+        return ["fake"]
     
     @strawberry.field
     def description(self) -> str:

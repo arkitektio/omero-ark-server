@@ -26,3 +26,17 @@ class SearchFilterMixin:
         return queryset.filter(name__contains=self.search)
 
 
+
+
+
+@strawberry.input
+class ProjectFilter(IDFilterMixin, SearchFilterMixin):
+    pass
+
+@strawberry.input
+class ImageFilter(IDFilterMixin, SearchFilterMixin):
+    pass
+
+@strawberry.input
+class DatasetFilter(IDFilterMixin, SearchFilterMixin):
+    pass

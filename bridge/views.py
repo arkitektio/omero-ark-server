@@ -1,7 +1,12 @@
 # Create your views here.
-from authentikate.utils import authenticate_header_or_none, 
 from django.http.response import HttpResponseForbidden
 from django.http import HttpResponseForbidden, StreamingHttpResponse
+from .decorators import omero_connected
+from django.http import HttpResponse, Http404
+from .conn import get_conn
+
+
+
 
 import logging
 
@@ -22,28 +27,67 @@ class ConnCleaningHttpResponse(StreamingHttpResponse):
 
 
 
-def file_download_view(request, id):
+
+
+
+
+def _render_thumbnail(id, size=None):
     """
-    A dataset is a collection of data files and metadata files.
-    It mimics the concept of a folder in a file system and is the top level
-    object in the data model.
+    Returns a jpeg with the rendered thumbnail for image 'iid'
 
+    @param request:     http request
+    @param iid:         Image ID
+    @return:            http response containing jpeg
     """
-    pass
 
-    user = authenticate_header_or_none(request.headers)
-    if not user:
-        return HttpResponseForbidden("Not authenticated")
+    conn = get_conn()
 
+    size = size or (200,)
 
 
-
-
-    rsp = ConnCleaningHttpResponse(
-            orig_file.getFileInChunks(buf=settings.CHUNK_SIZE)
+    img = conn.getObject("Image", id)
+    if img is None:
+        logger.debug("(b)Image %s not found..." % (str(id)))
+        raise Http404("Failed to render thumbnail")
+    else:
+        jpeg_data = img.getThumbnail(
+            size=size, direct=True, rdefId=None, z=0, t=0
         )
-    rsp.conn = conn
-    rsp["Content-Length"] = orig_file.getSize()
-    # ',' in name causes duplicate headers
-    fname = orig_file.getName().replace(" ", "_").replace(",", ".")
-    rsp["Content-Disposition"] = "attachment; filename=%s" % (fname)
+        if jpeg_data is None:
+            raise Http404("Failed to render thumbnail")
+
+    return jpeg_data
+
+
+
+
+
+
+@omero_connected
+def render_thumbnail(request, id):
+    """
+    Returns an HttpResponse wrapped jpeg with the rendered thumbnail for image
+    'iid'
+
+    @param request:     http request
+    @param iid:         Image ID
+    """
+    print(request)
+    jpeg_data = _render_thumbnail(
+         id=id,
+         size=request.GET.get("size", (200,))
+    )
+    rsp = HttpResponse(jpeg_data, content_type="image/jpeg")
+    return rsp
+
+
+
+
+
+
+
+
+
+
+
+

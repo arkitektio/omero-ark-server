@@ -23,6 +23,10 @@ class User:
     email: str
     password: str
 
+    @strawberry_django.field
+    def omero_user(self) -> Optional["OmeroUser"]:
+        return models.OmeroUser.objects.filter(user=self).first()
+
 
 
 @strawberry.type()
@@ -32,6 +36,10 @@ class Image:
     @strawberry.field
     def name(self) -> str:
         return self.value.getName()
+    
+    @strawberry.field
+    def id(self) -> str:
+        return self.value.getId()
     
     @strawberry.field
     def acquisition_date(self) -> Optional[datetime.datetime]:
@@ -47,6 +55,11 @@ class Image:
 @strawberry.type()
 class Dataset:
     value: strawberry.Private[object]
+
+
+    @strawberry.field
+    def id(self) -> str:
+        return self.value.getId()
 
     @strawberry.field
     def name(self) -> str:
@@ -67,6 +80,11 @@ class Dataset:
 @strawberry.type()
 class Project:
     value: strawberry.Private[object]
+
+
+    @strawberry.field
+    def id(self) -> str:
+        return self.value.getId()
 
     @strawberry.field
     def name(self) -> str:

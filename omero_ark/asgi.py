@@ -10,6 +10,11 @@ https://docs.djangoproject.com/en/4.2/howto/deployment/asgi/
 
 import os
 
+import django
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "omero_ark.settings")
+django.setup()
+
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from django.urls import re_path
@@ -18,7 +23,6 @@ from kante.consumers import KanteHTTPConsumer, KanteWsConsumer
 from kante.cors import CorsMiddleware
 
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "omero_ark.settings")
 # Initialize Django ASGI application early to ensure the AppRegistry
 # is populated before importing code that may import ORM models.
 django_asgi_app = get_asgi_application()

@@ -21,4 +21,5 @@ app_name = "bridge"
 
 urlpatterns = [
     path("thumbnails/<id>/", views.render_thumbnail, name="render_thumbnail"),
+    path("download/<id>/", views.download, name="download"),
 ]

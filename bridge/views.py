@@ -88,6 +88,24 @@ def render_thumbnail(request, id):
 
 
 
+@omero_connected
+@cache_page(CACHE_TTL)
+def download(request, id):
+    """
+    Returns an HttpResponse wrapped jpeg with the rendered thumbnail for image
+    'iid'
+
+    @param request:     http request
+    @param iid:         Image ID
+    """
+    print(request)
+    jpeg_data = _render_thumbnail(
+         id=id,
+         size=request.GET.get("size", (200,))
+    )
+    rsp = HttpResponse(jpeg_data, content_type="image/jpeg")
+    return rsp
+
 
 
 

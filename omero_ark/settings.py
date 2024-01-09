@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",
-    "graphene_django",
     "channels_redis",
     "guardian",
     "simple_history",
@@ -58,27 +57,6 @@ INSTALLED_APPS = [
 
 AUTH_USER_MODEL = "authentikate.User"
 
-# S3_PUBLIC_DOMAIN = f"{conf.s3.public.host}:{conf.s3.public.port}"  # TODO: FIx
-AWS_ACCESS_KEY_ID = conf.minio.access_key
-AWS_SECRET_ACCESS_KEY = conf.minio.secret_key
-AWS_S3_ENDPOINT_URL = f"{conf.minio.protocol}://{conf.minio.host}:{conf.minio.port}"
-# AWS_S3_PUBLIC_ENDPOINT_URL = (
-#    f"{conf.minio.public.protocol}://{conf.minio.public.host}:{conf.minio.public.port}"
-# )
-AWS_S3_URL_PROTOCOL = f"{conf.minio.protocol}:"
-AWS_S3_FILE_OVERWRITE = False
-AWS_QUERYSTRING_EXPIRE = 3600
-
-
-ZARR_BUCKET = conf.minio.buckets.zarr
-PARQUET_BUCKET = conf.minio.buckets.parquet
-FILE_BUCKET = conf.minio.buckets.media
-MEDIA_BUCKET = conf.minio.buckets.media
-
-AWS_STORAGE_BUCKET_NAME = conf.minio.buckets.media
-AWS_DEFAULT_ACL = "private"
-AWS_S3_USE_SSL = True
-AWS_S3_SECURE_URLS = False
 
 GRAPHENE = {"SCHEMA": "core.schema.schema"}
 

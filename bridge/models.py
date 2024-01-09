@@ -1,15 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from taggit.managers import TaggableManager
-from bridge import enums
-from koherent.fields import HistoryField, HistoricForeignKey
-import koherent.signals
-from django_choices_field import TextChoicesField
-
 
 # Create your models here.
-import boto3
-import json
 from django.conf import settings
 
 

@@ -38,6 +38,9 @@ class Mutation:
     ensure_omero_user: types.OmeroUser = strawberry_django.mutation(
         resolver=mutations.ensure_omero_user,
     )
+    delete_me: types.User = strawberry_django.mutation(
+        resolver=mutations.delete_me,
+    )
     
     
 

@@ -41,6 +41,9 @@ class Mutation:
     delete_me: types.User = strawberry_django.mutation(
         resolver=mutations.delete_me,
     )
+    create_project: types.Project = strawberry_django.mutation(
+        resolver=mutations.create_project,
+    )
     
     
 

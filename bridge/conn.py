@@ -10,7 +10,7 @@ current_conn: ContextVar[any] = ContextVar("current_conn")
 
 @contextmanager
 def omerocon(user: OmeroUser):
-    conn = BlitzGateway(user.omero_username, user.omero_password, host=settings.OMERO_HOST, port=settings.OMERO_PORT)
+    conn = BlitzGateway(user.omero_username, user.omero_password, host=user.omero_host, port=user.omero_port)
     conn.connect()
 
     try:
@@ -40,7 +40,7 @@ class OmeroExtension(SchemaExtension):
             user = await get_omero_user(self.execution_context.context)
             print(user)
 
-            conn = BlitzGateway(user.omero_username, user.omero_password, host=settings.OMERO_HOST, port=settings.OMERO_PORT)
+            conn = BlitzGateway(user.omero_username, user.omero_password, host=user.omero_host, port=user.omero_port)
             conn.connect()
             token = current_conn.set(conn)
 

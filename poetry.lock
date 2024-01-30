@@ -661,6 +661,24 @@ files = [
 test = ["pytest (>=6)"]
 
 [[package]]
+name = "ezomero"
+version = "2.1.0"
+description = "A suite of convenience functions for working with OMERO. Written and maintained by the Research IT team at The Jackson Laboratory."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "ezomero-2.1.0-py3-none-any.whl", hash = "sha256:1a09e299d49e1f1344aba52f70c4303f7a580f4463a863da5364e5900b9e90f2"},
+    {file = "ezomero-2.1.0.tar.gz", hash = "sha256:729db284c27067b8accb127c6501b2205f63e639045339e6939f7c991f0759c7"},
+]
+
+[package.dependencies]
+numpy = ">=1.22"
+omero-py = "5.13.1"
+
+[package.extras]
+tables = ["pandas"]
+
+[[package]]
 name = "future"
 version = "0.18.3"
 description = "Clean single-source support for Python 3 and 2"
@@ -949,13 +967,13 @@ PyYAML = ">=5.1.0"
 
 [[package]]
 name = "omero-py"
-version = "5.17.0"
+version = "5.13.1"
 description = "Python bindings to the OMERO.blitz server"
 optional = false
 python-versions = ">=3"
 files = [
-    {file = "omero-py-5.17.0.tar.gz", hash = "sha256:138120adfb500b6a3c85fd2160aefd10371f8080486d18231a6b6a55551e7aa1"},
-    {file = "omero_py-5.17.0-py3-none-any.whl", hash = "sha256:49e8712c5468fcd823e287dd70221ca13cb02a292e77b211ba9f831cdea4fcad"},
+    {file = "omero-py-5.13.1.tar.gz", hash = "sha256:3be7f973fc7f52fb25ace7b053c1ec5424d4f71a35ed1cdcdc2973d2db73332a"},
+    {file = "omero_py-5.13.1-py3-none-any.whl", hash = "sha256:d4df1587089fe3c3a3706087cc185d350ff3efeec54b4d8a9c23496f9ceb7aff"},
 ]
 
 [package.dependencies]
@@ -963,12 +981,10 @@ appdirs = "*"
 future = "*"
 numpy = "*"
 Pillow = "*"
-portalocker = "*"
 pywin32 = {version = "*", markers = "platform_system == \"Windows\""}
 PyYAML = "*"
 requests = "*"
-urllib3 = "<2"
-zeroc-ice = ">=3.6.5,<3.7"
+zeroc-ice = ">=3.6.4,<3.7"
 
 [[package]]
 name = "packaging"
@@ -1106,25 +1122,6 @@ files = [
 [package.extras]
 dev = ["pre-commit", "tox"]
 testing = ["pytest", "pytest-benchmark"]
-
-[[package]]
-name = "portalocker"
-version = "2.8.2"
-description = "Wraps the portalocker recipe for easy usage"
-optional = false
-python-versions = ">=3.8"
-files = [
-    {file = "portalocker-2.8.2-py3-none-any.whl", hash = "sha256:cfb86acc09b9aa7c3b43594e19be1345b9d16af3feb08bf92f23d4dce513a28e"},
-    {file = "portalocker-2.8.2.tar.gz", hash = "sha256:2b035aa7828e46c58e9b31390ee1f169b98e1066ab10b9a6a861fe7e25ee4f33"},
-]
-
-[package.dependencies]
-pywin32 = {version = ">=226", markers = "platform_system == \"Windows\""}
-
-[package.extras]
-docs = ["sphinx (>=1.7.1)"]
-redis = ["redis"]
-tests = ["pytest (>=5.4.1)", "pytest-cov (>=2.8.1)", "pytest-mypy (>=0.8.0)", "pytest-timeout (>=2.1.0)", "redis", "sphinx (>=6.0.0)", "types-redis"]
 
 [[package]]
 name = "psycopg"
@@ -1392,6 +1389,7 @@ files = [
     {file = "PyYAML-6.0.1-cp311-cp311-win_amd64.whl", hash = "sha256:bf07ee2fef7014951eeb99f56f39c9bb4af143d8aa3c21b1677805985307da34"},
     {file = "PyYAML-6.0.1-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:855fb52b0dc35af121542a76b9a84f8d1cd886ea97c84703eaa6d88e37a2ad28"},
     {file = "PyYAML-6.0.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:40df9b996c2b73138957fe23a16a4f0ba614f4c0efce1e9406a184b6d07fa3a9"},
+    {file = "PyYAML-6.0.1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a08c6f0fe150303c1c6b71ebcd7213c2858041a7e01975da3a99aed1e7a378ef"},
     {file = "PyYAML-6.0.1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6c22bec3fbe2524cde73d7ada88f6566758a8f7227bfbf93a408a9d86bcc12a0"},
     {file = "PyYAML-6.0.1-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:8d4e9c88387b0f5c7d5f281e55304de64cf7f9c0021a3525bd3b1c542da3b0e4"},
     {file = "PyYAML-6.0.1-cp312-cp312-win32.whl", hash = "sha256:d483d2cdf104e7c9fa60c544d92981f12ad66a457afae824d146093b8c294c54"},
@@ -1837,4 +1835,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "d53b75272e0cdfea667486dc8c0d8426971390715ec0cdd4902f7c800cbc3442"
+content-hash = "751c89b056bd335c0bc8666e1f0653a66f3542822481a04e54383fffc92b471b"

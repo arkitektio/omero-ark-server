@@ -6,7 +6,7 @@ import strawberry
 
 def images(filters: filters.ImageFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> types.Image:
     x = get_conn().listImages()
-    return [types.Project(value=y) for y in x]
+    return [types.Image(value=y) for y in x]
 
 
 def image(id: strawberry.ID) -> types.Image:

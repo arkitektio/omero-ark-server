@@ -24,8 +24,9 @@ django-cors-headers = "^4.2.0"
 authentikate = ">=0.1.11"
 kante = ">=0.1.7"
 koherent = ">=0.1.2"
-omero-py = "^5.17.0"
+omero-py = "^5.13.0"
 django-redis = "^5.4.0"
+ezomero = "^2.1.0"
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "strawberry.ext.mypy_plugin"]

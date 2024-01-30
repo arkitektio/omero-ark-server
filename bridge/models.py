@@ -28,6 +28,15 @@ class OmeroUser(models.Model):
         max_length=2000,
         help_text="The username for the omero user",
     )
+    omero_host = models.CharField(
+        max_length=2000,
+        help_text="The host for the omero user",
+        default=settings.OMERO_HOST,
+    )
+    omero_port = models.IntegerField(
+        help_text="The port for the omero user",
+        default=settings.OMERO_PORT,
+    )
     
 
 

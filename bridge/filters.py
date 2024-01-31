@@ -8,7 +8,7 @@ from strawberry_django.filters import FilterLookup
 
 @strawberry.input
 class IDFilterMixin:
-    ids: list[strawberry.ID] | None
+    ids: list[strawberry.ID] | None = None
 
     def filter_ids(self, queryset, info):
         if self.ids is None:
@@ -18,7 +18,7 @@ class IDFilterMixin:
 
 @strawberry.input
 class SearchFilterMixin:
-    search: str | None
+    search: str | None = None
 
     def filter_search(self, queryset, info):
         if self.search is None:
@@ -30,7 +30,9 @@ class SearchFilterMixin:
 
 
 @strawberry.input
-class ProjectFilter(IDFilterMixin, SearchFilterMixin):
+class ProjectFilter:
+    ids: list[strawberry.ID] | None = None
+    search: str | None = None
     pass
 
 @strawberry.input

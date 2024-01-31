@@ -76,10 +76,12 @@ def render_thumbnail(request, id):
     @param request:     http request
     @param iid:         Image ID
     """
-    print(request)
+
+    size = request.GET.get("size", 200)
+
     jpeg_data = _render_thumbnail(
          id=id,
-         size=request.GET.get("size", (200,))
+         size=(size,)
     )
     rsp = HttpResponse(jpeg_data, content_type="image/jpeg")
     return rsp

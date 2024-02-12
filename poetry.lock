@@ -556,6 +556,24 @@ files = [
 Django = ">=2.2"
 
 [[package]]
+name = "django-health-check"
+version = "3.18.1"
+description = "Run checks on services like databases, queue servers, celery processes, etc."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "django-health-check-3.18.1.tar.gz", hash = "sha256:44552d55ae8950c9548d3b90f9d9fd5570b57446a19b2a8e674c82f993cb7a2c"},
+    {file = "django_health_check-3.18.1-py2.py3-none-any.whl", hash = "sha256:2c89a326cd79830e2fc6808823a9e7e874ab23f7aef3ff2c4d1194c998e1dca1"},
+]
+
+[package.dependencies]
+django = ">=2.2"
+
+[package.extras]
+docs = ["sphinx"]
+test = ["celery", "pytest", "pytest-cov", "pytest-django", "redis"]
+
+[[package]]
 name = "django-probes"
 version = "1.7.0"
 description = "Make Django wait until database is ready. Probes for Docker and Kubernetes."
@@ -1835,4 +1853,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "751c89b056bd335c0bc8666e1f0653a66f3542822481a04e54383fffc92b471b"
+content-hash = "e3623d5265c6547c7328a489e99ab2524eeab165517ddf181b4cba4d890ff076"

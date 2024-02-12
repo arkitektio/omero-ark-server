@@ -22,6 +22,7 @@ from .schema import schema
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("ht/", include("health_check.urls")),
     path("graphql", AsyncGraphQLView.as_view(schema=schema)),
     path("api/", include("bridge.urls")),
 ]

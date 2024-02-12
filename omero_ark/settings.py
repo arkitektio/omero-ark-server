@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "health_check",
+    "health_check.db",
     "corsheaders",
     "channels_redis",
     "guardian",
@@ -158,6 +160,7 @@ AUTHENTIKATE = {
     ],
     "IMITATE_PERMISSION": "authentikate.imitate",
     "ALLOW_IMITATE": True,
+    "STATIC_TOKENS": conf.lok.get("static_tokens", {}),
 }
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/

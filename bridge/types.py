@@ -15,6 +15,11 @@ from enum import Enum
 from strawberry.experimental import pydantic
 from pydantic import BaseModel
 
+@strawberry.type
+class DeleteResult:
+    id: str
+
+
 @strawberry_django.type(get_user_model())
 class User:
     id: auto
@@ -69,6 +74,7 @@ class Dataset:
 
     @strawberry.field
     def id(self) -> str:
+        print(self.value)
         return self.value.getId()
 
     @strawberry.field

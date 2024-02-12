@@ -44,6 +44,10 @@ class Mutation:
     create_project: types.Project = strawberry_django.mutation(
         resolver=mutations.create_project,
     )
+    create_dataset: types.Dataset = strawberry_django.mutation(
+        resolver=mutations.create_dataset,
+    )
+    delete_image = strawberry.field(resolver=mutations.delete_image)
     
     
 

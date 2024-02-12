@@ -27,6 +27,7 @@ koherent = ">=0.1.2"
 omero-py = "^5.13.0"
 django-redis = "^5.4.0"
 ezomero = "^2.1.0"
+django-health-check = "^3.18.1"
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "strawberry.ext.mypy_plugin"]

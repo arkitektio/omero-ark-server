@@ -6,6 +6,8 @@ import strawberry
 def projects(filters: filters.ProjectFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> types.Project:
     x = get_conn().listProjects()
 
+
+
     if filters:
         if filters.ids:
             x = [y for y in x if str(y.getId()) in filters.ids]

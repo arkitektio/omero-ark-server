@@ -32,3 +32,26 @@ class CreateProjectInputModel(BaseModel):
 class CreateProjectInput:
     name: str
     description: str | None = None
+
+
+
+class CreateDatasetInputModel(BaseModel):
+    project_id: str
+    name: str
+    description: str | None = None
+
+@pydantic.input(CreateDatasetInputModel)
+class CreateDatasetInput:
+    project_id: strawberry.ID
+    name: str
+    description: str | None = None
+
+
+
+
+class DeleteImageInputModel(BaseModel):
+    id: str
+
+@pydantic.input(DeleteImageInputModel)
+class DeleteImageInput:
+     id: strawberry.ID

@@ -2,9 +2,8 @@ from kante.types import Info
 from typing import AsyncGenerator
 import strawberry
 from strawberry_django.optimizer import DjangoOptimizerExtension
-from bridge.channel import image_listen
+from bridge.channel import image_channel
 from strawberry import ID
-from kante.directives import upper, replace, relation
 from strawberry.permission import BasePermission
 from typing import Any, Type
 from bridge import types, models
@@ -12,11 +11,36 @@ from bridge import mutations
 from bridge import queries
 from strawberry.field_extensions import InputMutationExtension
 import strawberry_django
-from koherent.strawberry.extension import KoherentExtension
+from authentikate.strawberry import AuthExtension, AuthSubscribeExtension
+from authentikate.strawberry.extension import AuthentikateExtension
 from bridge.conn import OmeroExtension
-from authentikate.strawberry.permissions import HasScopes, IsAuthenticated, NeedsScopes
+import kante
+from strawberry import ID as StrawberryID
+from typing import Annotated 
+from koherent.strawberry.extension import KoherentExtension
 
 
+ID = Annotated[StrawberryID, strawberry.argument(description="The unique identifier of an object")]
+
+
+def field(permission_classes=None, **kwargs):
+    "A wrapper for field that adds default permission classes and extensions."
+    if permission_classes:
+        pass
+    else:
+        permission_classes = []
+    return kante.field(extensions=[AuthExtension()], **kwargs)
+
+
+def mutation(roles: list[str] | None = None, **kwargs) -> strawberry.mutation:
+    """A wrapper for mutation that adds default permission classes and extensions."""
+
+    return kante.mutation(extensions=[AuthExtension(any_role_of=roles or ["admin", "bot"])], **kwargs)
+
+
+def subscription(**kwargs) -> strawberry.subscription:
+    """A wrapper for subscription that adds default permission classes and extensions."""
+    return kante.subscription(extensions=[AuthSubscribeExtension()], **kwargs)
 
 
 @strawberry.type
@@ -52,11 +76,11 @@ class Mutation:
     
 
 
-schema = strawberry.Schema(
+schema = kante.Schema(
     query=Query,
     mutation=Mutation,
-    directives=[upper, replace, relation],
     extensions=[
+        AuthentikateExtension,
         DjangoOptimizerExtension,
         KoherentExtension,
         OmeroExtension

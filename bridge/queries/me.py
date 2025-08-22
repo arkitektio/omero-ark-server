@@ -1,5 +1,5 @@
 from bridge import models, types
-from koherent.types import Info
+from kante.types import Info
 
 
 def me(info: Info) -> types.User:

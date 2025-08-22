@@ -1,5 +1,10 @@
 from kante.channel import build_channel
+from pydantic import BaseModel, Field  
 
 
-image_broadcast, image_listen = build_channel("image")
-provenance_broadcast, provenance_listen = build_channel("provenance")
+class ImageSignal(BaseModel):
+    image: int | None = Field(None, description="The message that was created.")
+
+
+
+image_channel = build_channel(ImageSignal)

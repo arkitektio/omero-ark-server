@@ -5,8 +5,7 @@ from typing import List, Optional, Annotated, Union, cast
 import strawberry_django
 from bridge import models, scalars, filters, enums
 from django.contrib.auth import get_user_model
-from koherent.models import AppHistoryModel
-from authentikate.strawberry.types import App
+from authentikate.strawberry.types import Client
 from kante.types import Info
 import datetime
 

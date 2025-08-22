@@ -1,6 +1,5 @@
 import strawberry
 from bridge import models
-from koherent.strawberry.filters import ProvenanceFilter
 from strawberry import auto
 from typing import Optional
 from strawberry_django.filters import FilterLookup

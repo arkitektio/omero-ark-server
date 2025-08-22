@@ -28,7 +28,7 @@ SECRET_KEY = "django-insecure-6vh8x**%4mm0yxjbghipsalf5$wum10_satqhxg$vo9jninehx
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS: list[str] = []
+ALLOWED_HOSTS: list[str] = ["*"]
 
 
 # Application definition
@@ -41,9 +41,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "health_check",
-    "health_check.db",
-    "corsheaders",
     "channels_redis",
     "guardian",
     "simple_history",
@@ -52,8 +49,9 @@ INSTALLED_APPS = [
     "kante",
     "channels",
     "django_probes",
-    "taggit",
     "bridge",
+    "health_check",  # required for health checks
+    "health_check.db",  # stock Django health checkers
 ]
 
 
@@ -70,11 +68,22 @@ CHANNEL_LAYERS = {
     },
 }
 
+
+OLLAMA_URL = conf.get("ollama_url", "http://ollama:11434")
+CHROMA_DB_HOST = conf.get("chroma_db_host", "chromadb")
+CHROMA_DB_PORT = conf.get("chroma_db_port", 8000)
+
 CORS_ALLOW_ALL_ORIGINS = True
 
 
+STRAWBERRY_DJANGO = {
+    "FIELD_DESCRIPTION_FROM_HELP_TEXT": True,
+    "TYPE_DESCRIPTION_FROM_MODEL_DOCSTRING": True,
+    "USE_DEPRECATED_FILTERS": True,
+}
+
+
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -85,6 +94,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "omero_ark.urls"
+MY_SCRIPT_NAME = conf.get("force_script_name", "")
 
 TEMPLATES = [
     {
@@ -125,10 +135,6 @@ DATABASES = {
     }
 }
 
-
-OMERO_HOST = conf.omero.host
-OMERO_PORT = conf.omero.port
-
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -149,19 +155,19 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 AUTHENTIKATE = {
-    "PUBLIC_KEY": conf.lok.get("public_key", None),
-    "PUBLIC_KEY_PEM_FILE": conf.lok.get("public_key_pem_file", None),
-    "KEY_TYPE": conf.lok.get("key_type", "RS256"),
-    "AUTHORIZATION_HEADERS": [
-        "Authorization",
-        "X-Auth-Token",
-        "AUTHORIZATION",
-        "authorization",
+    "ISSUERS": [
+        {
+            "iss": "lok",
+            "kind": "rsa",
+            "public_key": conf.lok.get("public_key", None),
+        }
     ],
-    "IMITATE_PERMISSION": "authentikate.imitate",
-    "ALLOW_IMITATE": True,
     "STATIC_TOKENS": conf.lok.get("static_tokens", {}),
 }
+
+OMERO_HOST = conf.get("omero_host", "omero")
+OMERO_PORT = conf.get("omero_port", 4064)
+
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -169,16 +175,13 @@ CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": f"redis://{conf.redis.host}:{conf.redis.port}/1",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient"
-        },
-        "KEY_PREFIX": "omero_ark_cache"
+        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        "KEY_PREFIX": "kluster_server_cache",
     }
 }
 
 
-CACHE_TTL_DEFAULT =  60 * 15
-
+CACHE_TTL_DEFAULT = 60 * 15
 
 
 LANGUAGE_CODE = "en-us"

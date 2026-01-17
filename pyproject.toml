@@ -3,7 +3,7 @@ name = "omero-ark-server"
 version = "0.1.0"
 description = ""
 authors = [{ name = "jhnnsrs", email = "jhnnsrs@gmail.com" }]
-requires-python = ">=3.11,<4"
+requires-python = ">=3.12,<4"
 readme = "README.md"
 dependencies = [
     "django>=5.2",

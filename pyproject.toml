@@ -3,7 +3,7 @@ name = "omero-ark-server"
 version = "0.1.0"
 description = ""
 authors = [{ name = "jhnnsrs", email = "jhnnsrs@gmail.com" }]
-requires-python = ">=3.12,<4"
+requires-python = ">=3.12,<3.13"
 readme = "README.md"
 dependencies = [
     "django>=5.2",
@@ -26,8 +26,6 @@ dependencies = [
     "duckdb>=1.2.2",
     "django-taggit>=6.1.0",
     "litellm>=1.68.0",
-    "ollama>=0.4.8",
-    "chromadb>=1.0.8",
     "django-health-check>=3.20.0",
     "zeroc-ice",
     "omero-py>=5.21.0",

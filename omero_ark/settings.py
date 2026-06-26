@@ -68,10 +68,6 @@ CHANNEL_LAYERS = {
 }
 
 
-OLLAMA_URL = conf.ollama_url
-CHROMA_DB_HOST = conf.chroma_db_host
-CHROMA_DB_PORT = conf.chroma_db_port
-
 CORS_ALLOW_ALL_ORIGINS = True
 
 

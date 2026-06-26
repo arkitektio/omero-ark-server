@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.0.0-rc.1 (2026-06-26)
+
+### Features
+
+- Removal of stale migrations
+  ([`2bc7d30`](https://github.com/arkitektio/omero-ark-server/commit/2bc7d30dd21ee804b33eacd4c1e9e112b6e179fc))
+
+
 ## v0.1.0-rc.1 (2026-06-26)
 
 ### Bug Fixes

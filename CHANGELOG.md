@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.0.0-rc.3 (2026-08-20)
+
+### Bug Fixes
+
+- Authentikate updates
+  ([`f44e140`](https://github.com/arkitektio/omero-ark-server/commit/f44e140209cab17d4941c71c7da7360c8c066aa8))
+
+
 ## v1.0.0-rc.2 (2026-06-29)
 
 ### Bug Fixes

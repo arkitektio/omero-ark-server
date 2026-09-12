@@ -151,7 +151,13 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          # amd64 only, unlike the rest of the fleet: this service depends on
+          # zeroc-ice, whose only distribution is Glencoe's prebuilt
+          # manylinux_2_28_x86_64 wheel. The arm64 leg of a multi-arch build
+          # fails at `uv sync` with "the binary distribution is incompatible
+          # with the current platform", which took the whole image build down
+          # and left the release tagged but unpublished.
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

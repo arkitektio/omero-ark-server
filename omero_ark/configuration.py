@@ -78,9 +78,6 @@ class Settings(BaseSettings):
     authentikate: AuthentikateSettings = Field(description="Token-verification config (authentikate).")
     omero_host: str = Field(default="omero", description="OMERO server host.")
     omero_port: int = Field(default=4064, description="OMERO server port.")
-    ollama_url: str = Field(default="http://ollama:11434", description="Base URL of the Ollama server.")
-    chroma_db_host: str = Field(default="chromadb", description="ChromaDB vector store host.")
-    chroma_db_port: int = Field(default=8000, description="ChromaDB vector store port.")
 
     @classmethod
     def settings_customise_sources(

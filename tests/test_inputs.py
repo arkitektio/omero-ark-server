@@ -58,9 +58,9 @@ class TestCreateDatasetInputModel:
         with pytest.raises(ValidationError):
             CreateDatasetInputModel(project_id=12, name="ds")
 
-    def test_project_id_and_name_required(self):
-        with pytest.raises(ValidationError):
-            CreateDatasetInputModel(name="ds")
+    def test_name_required_project_optional(self):
+        """A dataset may be created without a project: it is then an orphan, as in OMERO."""
+        assert CreateDatasetInputModel(name="ds").project_id is None
         with pytest.raises(ValidationError):
             CreateDatasetInputModel(project_id="1")
 

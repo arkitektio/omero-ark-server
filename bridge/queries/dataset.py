@@ -1,43 +1,33 @@
-from bridge.conn import get_conn
-from bridge import types, filters
-from strawberry_django import pagination
-import strawberry
-import omero 
-import omero.clients
 from typing import List
 
+import strawberry
+from strawberry_django import pagination
+
+from bridge import filters, types
+from bridge.gateway import get_object, list_objects
+
+
 def datasets(filters: filters.DatasetFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> List[types.Dataset]:
-    
-    params = omero.sys.ParametersI()
-
-    query = ("select d from Dataset d ")
-
-    datasets = get_conn().getQueryService().findAllByQuery(query, params)
-    
-    datasets_info = []
-    for dataset in datasets:
-        dataset_info = {
-            "ID": dataset.id.val,
-            "Name": dataset.name.val,
-        }
-        datasets_info.append(dataset_info)
-
-
-    if filters:
-        if filters.ids:
-            # Ids are strings
-            datasets_info = [y for y in datasets_info if str(y.get("ID", -1)) in filters.ids]
-        if filters.search:
-            datasets_info = [y for y in datasets_info if y.get("Name", "").startswith(filters.search)]
-
-    if pagination:
-        datasets_info = datasets_info[pagination.offset : pagination.offset + pagination.limit]
-
-
-    datasets = [get_conn().getObject("Dataset", y["ID"]) for y in datasets_info]
-    return  [types.Dataset(value=dataset) for dataset in datasets]
+    """List datasets, optionally restricted to one project or to orphans."""
+    opts = {}
+    if filters and filters.project is not None:
+        opts["project"] = int(filters.project)
+    if filters and filters.orphaned:
+        opts["orphaned"] = True
+    return [
+        types.Dataset(value=d)
+        for d in list_objects(
+            "Dataset",
+            ids=filters.ids if filters else None,
+            search=filters.search if filters else None,
+            owner=filters.owner if filters else None,
+            opts=opts,
+            offset=pagination.offset if pagination else None,
+            limit=pagination.limit if pagination else None,
+        )
+    ]
 
 
 def dataset(id: strawberry.ID) -> types.Dataset:
-    x = get_conn().getObject("Dataset", id)
-    return types.Dataset(value=x)
+    """Fetch one dataset by id."""
+    return types.Dataset(value=get_object("Dataset", id))

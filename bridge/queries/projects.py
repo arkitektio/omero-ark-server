@@ -1,26 +1,27 @@
-from bridge.conn import get_conn
-from bridge import types, filters
-from strawberry_django import pagination
+from typing import List
+
 import strawberry
+from strawberry_django import pagination
 
-def projects(filters: filters.ProjectFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> types.Project:
-    x = get_conn().listProjects()
+from bridge import filters, types
+from bridge.gateway import get_object, list_objects
 
 
-
-    if filters:
-        if filters.ids:
-            x = [y for y in x if str(y.getId()) in filters.ids]
-            print(x.getID() for x in x)
-        if filters.search:
-            x = [y for y in x if filters.search in y.getName()]
-
-    if pagination:
-        x = x[pagination.offset : pagination.offset + pagination.limit]
-
-    return [types.Project(value=y) for y in x]
+def projects(filters: filters.ProjectFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> List[types.Project]:
+    """List the projects visible to the current OMERO user."""
+    return [
+        types.Project(value=p)
+        for p in list_objects(
+            "Project",
+            ids=filters.ids if filters else None,
+            search=filters.search if filters else None,
+            owner=filters.owner if filters else None,
+            offset=pagination.offset if pagination else None,
+            limit=pagination.limit if pagination else None,
+        )
+    ]
 
 
 def project(id: strawberry.ID) -> types.Project:
-    x = get_conn().getObject("Project", id)
-    return types.Project(value=x)
+    """Fetch one project by id."""
+    return types.Project(value=get_object("Project", id))

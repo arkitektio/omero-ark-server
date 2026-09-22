@@ -2,8 +2,11 @@ from kante.types import Info
 from bridge import types, models, inputs
 from django.conf import settings
 from omero.gateway import BlitzGateway
+import logging
 import socket
 import strawberry
+
+logger = logging.getLogger(__name__)
 
 
 def isOpen(ip, port, timeout=1.0):
@@ -40,7 +43,7 @@ def ensure_omero_user(info: Info, input: inputs.OmeroUserInput) -> types.OmeroUs
 
         # We are now logged in, conn.getUser() returns a User object
         for i in conn.listProjects():
-            print(i.name)
+            logger.debug("OMERO project visible to %s: %s", input.username, i.name)
 
         x, _ = models.OmeroUser.objects.update_or_create(
             user=info.context.request.user,

@@ -1,3 +1,4 @@
+import logging
 from omero.gateway import BlitzGateway
 from .models import OmeroUser
 from contextlib import contextmanager
@@ -5,6 +6,8 @@ from django.conf import settings
 from contextvars import ContextVar
 from strawberry.extensions import SchemaExtension
 from asgiref.sync import sync_to_async
+
+logger = logging.getLogger(__name__)
 
 current_conn: ContextVar[any] = ContextVar("current_conn")
 
@@ -35,10 +38,8 @@ def get_conn():
 
 class OmeroExtension(SchemaExtension):
     async def on_operation(self):
-        print("Starting operation")
         try:
             user = await get_omero_user(self.execution_context.context)
-            print(user)
 
             conn = BlitzGateway(user.omero_username, user.omero_password, host=user.omero_host, port=user.omero_port)
             conn.connect()
@@ -49,6 +50,7 @@ class OmeroExtension(SchemaExtension):
             finally:
                 current_conn.reset(token)
                 conn.close()
-        except Exception as e:
-            print(e)
+        except Exception:
+            # No OMERO connection for this operation; resolvers needing one fail with "No OMERO connection found".
+            logger.warning("Could not open an OMERO connection for this operation", exc_info=True)
             yield

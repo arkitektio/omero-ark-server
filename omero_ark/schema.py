@@ -6,6 +6,7 @@ that ``bridge.conn.OmeroExtension`` opens for the authenticated user.
 """
 
 from typing import Annotated
+from omero_ark.logs import QuietErrorsSchema
 
 import kante
 import strawberry
@@ -124,7 +125,11 @@ class Mutation:
     delete_roi: types.DeleteResult = strawberry.field(resolver=mutations.delete_roi)
 
 
-schema = kante.Schema(
+class Schema(QuietErrorsSchema, kante.Schema):
+    """kante.Schema, logging expected resolver errors as one line and bugs with a traceback (see logs.py)."""
+
+
+schema = Schema(
     query=Query,
     mutation=Mutation,
     types=types.INTERFACE_IMPLEMENTATIONS,

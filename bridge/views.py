@@ -100,7 +100,7 @@ def download(request, id):
     @param request:     http request
     @param iid:         Image ID
     """
-    print(request)
+    logger.debug("Thumbnail request %s", request.path)
     jpeg_data = _render_thumbnail(
          id=id,
          size=request.GET.get("size", (200,))

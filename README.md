@@ -51,14 +51,18 @@ Beside GraphQL, `api/thumbnails/<id>/` returns a rendered JPEG thumbnail of an i
 
 ## Running
 
-The image is `jhnnsrs/omero-ark`, for `linux/amd64` only. It has no default command:
+The image is `jhnnsrs/omero-ark`, for `linux/amd64` only. Started with no command it only
+says what it is, as every Arkitekt service's image does. To run it:
 
 ```sh
-bash run.sh   # wait for the database, apply migrations, serve on :80 (daphne)
+arkitekt-service standalone          # prepare the database, then serve on :80 (daphne)
+arkitekt-service standalone --debug  # the same, with Django's autoreloading server
+arkitekt-service run migrate         # only prepare the database: a job of its own
+arkitekt-service serve               # only serve
 ```
 
-Unlike the other Arkitekt services, this one still migrates when it starts.
-`run-debug.sh` does the same with Django's autoreloading server, for development.
+An installer runs the last two apart: the job once per release, the server as often as it
+likes.
 
 It needs an OMERO.server 5 it can reach on its Ice port (4064 by default), Postgres, Redis,
 and tokens issued by lok.

@@ -5,6 +5,16 @@ from django.contrib.auth import get_user_model
 from django.conf import settings
 
 
+def configured_host() -> str:
+    """The OMERO server the config names: a default asked for when a row is made, so that
+    no migration carries one deployment's host."""
+    return settings.OMERO_HOST
+
+
+def configured_port() -> int:
+    """The same for its port."""
+    return settings.OMERO_PORT
+
 
 class OmeroUser(models.Model):
     """
@@ -31,11 +41,11 @@ class OmeroUser(models.Model):
     omero_host = models.CharField(
         max_length=2000,
         help_text="The host for the omero user",
-        default=settings.OMERO_HOST,
+        default=configured_host,
     )
     omero_port = models.IntegerField(
         help_text="The port for the omero user",
-        default=settings.OMERO_PORT,
+        default=configured_port,
     )
     
 

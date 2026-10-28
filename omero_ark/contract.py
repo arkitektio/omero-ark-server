@@ -11,9 +11,27 @@ override.
 
 from __future__ import annotations
 
-from arkitekt_service.contract import JSON, Contract, Description, Facts, Job, Needs, Offers, Start, blocks
+from arkitekt_service.contract import JSON, Contract, Description, Facts, Job, Needs, Offers, Role, Scope, Start, blocks
 
 from omero_ark.configuration import Settings
+
+#: What an app may do here on a user's behalf: defined at the coordination server when the hub
+#: enrols. Every root field of the schema asks for one of them (`AuthExtension(scopes=...)`).
+SCOPES = [
+    Scope(key="omero_ark_read", description="Browse your OMERO projects, datasets, screens, plates, images and annotations."),
+    Scope(key="omero_ark_write", description="Create, change, link and delete OMERO projects, datasets, screens, plates, images, annotations and ROIs."),
+    Scope(key="omero_ark_all", description="Do everything in OMERO on your behalf.", is_all_scope=True),
+]
+
+#: What a member of an organization may do here.
+ROLES = [
+    Role(key="omero_ark_admin", description="Full control of the OMERO bridge in this organization.", is_admin_role=True),
+    Role(key="omero_ark_editor", description="Change OMERO data.", is_default_role=True),
+]
+
+#: The role every write asks for.
+EDITOR = "omero_ark_editor"
+ADMIN = "omero_ark_admin"
 
 
 def render(facts: Facts) -> dict[str, JSON]:
@@ -26,7 +44,7 @@ contract = Contract(
         name="omero_ark",
         identifier="live.arkitekt.omero_ark",
         summary="A bridge to an OMERO server: its projects, datasets and images.",
-        needs=Needs(),
+        needs=Needs(scopes=SCOPES, roles=ROLES),
         offers=Offers(),
     ),
     settings=Settings,

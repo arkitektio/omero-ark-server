@@ -18,11 +18,19 @@ DATABASES["default"] = {
 # authentikate static-token expansion). Mirrors elektro's settings_test.
 # Django forces DEBUG=False under the test runner, and authentikate 3.0 refuses static
 # tokens when DEBUG is False. These are deliberate test fixtures, so opt in explicitly.
+#: What a test token is unless it says otherwise: omero-ark's admin, through an app granted all of it.
+ADMIN_WITH_EVERY_SCOPE = {"roles": ["omero_ark_admin"], "scope": "openid omero_ark_all"}
+
 AUTHENTIKATE = {
     **AUTHENTIKATE,
     "allow_static_tokens_in_production": True,
     "static_tokens": {
-        "test": {"sub": "1"},
+        name: {**ADMIN_WITH_EVERY_SCOPE, **token}
+        for name, token in {
+            "test": {"sub": "1"},
+            # An app granted only what it reads, for the scope tests (tests/test_scopes.py).
+            "readertest": {"sub": "1", "scope": "openid omero_ark_read"},
+        }.items()
     },
 }
 

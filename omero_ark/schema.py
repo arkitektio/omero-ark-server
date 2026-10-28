@@ -17,112 +17,116 @@ from koherent.strawberry.extension import KoherentExtension
 from strawberry import ID as StrawberryID
 from strawberry_django.optimizer import DjangoOptimizerExtension
 
+from authentikate.catch_alls import declare_catch_alls
 from bridge import mutations, queries, types
 from bridge.conn import OmeroExtension
+from omero_ark.contract import EDITOR, contract
 
 ID = Annotated[StrawberryID, strawberry.argument(description="The unique identifier of an object")]
 
 
-def field(permission_classes=None, **kwargs):
-    "A wrapper for field that adds default permission classes and extensions."
-    if permission_classes:
-        pass
-    else:
-        permission_classes = []
-    return kante.field(extensions=[AuthExtension()], **kwargs)
+def field(scope: str = "omero_ark_read", **kwargs):
+    "A field an app needs ``scope`` for (``omero_ark_read``, unless it says otherwise)."
+    return strawberry.field(extensions=[AuthExtension(scopes=[scope])], **kwargs)
 
 
-def mutation(roles: list[str] | None = None, **kwargs) -> strawberry.mutation:
-    """A wrapper for mutation that adds default permission classes and extensions."""
+def mutation(scope: str = "omero_ark_write", roles: list[str] | None = None, **kwargs):
+    """A write: an app needs ``scope`` for it, a member one of ``roles`` (``omero_ark_editor`` unless it
+    says otherwise; ``omero_ark_admin`` holds every role)."""
+    return strawberry.field(extensions=[AuthExtension(scopes=[scope], any_role_of=roles or [EDITOR])], **kwargs)
 
-    return kante.mutation(extensions=[AuthExtension(any_role_of=roles or ["admin", "bot"])], **kwargs)
+
+def account_mutation(**kwargs) -> strawberry.mutation:
+    """A write to the caller's own OMERO account: it stores (or drops) the credentials every read and
+    write goes through, so it is a write like any other (``omero_ark_write``, ``omero_ark_editor``)."""
+    return strawberry_django.mutation(extensions=[AuthExtension(scopes=["omero_ark_write"], any_role_of=[EDITOR])], **kwargs)
 
 
-def subscription(**kwargs) -> strawberry.subscription:
-    """A wrapper for subscription that adds default permission classes and extensions."""
-    return kante.subscription(extensions=[AuthSubscribeExtension()], **kwargs)
+def subscription(scope: str = "omero_ark_read", **kwargs) -> strawberry.subscription:
+    """A subscription an app needs ``scope`` for (``omero_ark_read``, unless it says otherwise)."""
+    return kante.subscription(extensions=[AuthSubscribeExtension(scopes=[scope])], **kwargs)
 
 
 @strawberry.type
 class Query:
     # --- account layer ------------------------------------------------------
-    omero_users: list[types.OmeroUser] = strawberry_django.field(extensions=[])
-    me: types.User = strawberry.field(resolver=queries.me)
+    omero_users: list[types.OmeroUser] = strawberry_django.field(extensions=[AuthExtension(scopes=["omero_ark_read"])])
+    me: types.User = field(resolver=queries.me)
 
     # --- Project / Dataset / Image -------------------------------------------
-    projects: list[types.Project] = strawberry.field(resolver=queries.projects)
-    project: types.Project = strawberry.field(resolver=queries.project)
-    datasets: list[types.Dataset] = strawberry.field(resolver=queries.datasets)
-    dataset: types.Dataset = strawberry.field(resolver=queries.dataset)
-    images: list[types.Image] = strawberry.field(resolver=queries.images)
-    image: types.Image = strawberry.field(resolver=queries.image)
+    projects: list[types.Project] = field(resolver=queries.projects)
+    project: types.Project = field(resolver=queries.project)
+    datasets: list[types.Dataset] = field(resolver=queries.datasets)
+    dataset: types.Dataset = field(resolver=queries.dataset)
+    images: list[types.Image] = field(resolver=queries.images)
+    image: types.Image = field(resolver=queries.image)
 
     # --- Screen / Plate / Well -----------------------------------------------
-    screens: list[types.Screen] = strawberry.field(resolver=queries.screens)
-    screen: types.Screen = strawberry.field(resolver=queries.screen)
-    plates: list[types.Plate] = strawberry.field(resolver=queries.plates)
-    plate: types.Plate = strawberry.field(resolver=queries.plate)
-    wells: list[types.Well] = strawberry.field(resolver=queries.wells)
-    well: types.Well = strawberry.field(resolver=queries.well)
-    plate_acquisition: types.PlateAcquisition = strawberry.field(resolver=queries.plate_acquisition)
+    screens: list[types.Screen] = field(resolver=queries.screens)
+    screen: types.Screen = field(resolver=queries.screen)
+    plates: list[types.Plate] = field(resolver=queries.plates)
+    plate: types.Plate = field(resolver=queries.plate)
+    wells: list[types.Well] = field(resolver=queries.wells)
+    well: types.Well = field(resolver=queries.well)
+    plate_acquisition: types.PlateAcquisition = field(resolver=queries.plate_acquisition)
 
     # --- annotations & ROIs --------------------------------------------------
-    tags: list[types.TagAnnotation] = strawberry.field(resolver=queries.tags)
-    tag: types.TagAnnotation = strawberry.field(resolver=queries.tag)
-    annotation: types.Annotation = strawberry.field(resolver=queries.annotation)
-    rois: list[types.Roi] = strawberry.field(resolver=queries.rois)
-    roi: types.Roi = strawberry.field(resolver=queries.roi)
+    tags: list[types.TagAnnotation] = field(resolver=queries.tags)
+    tag: types.TagAnnotation = field(resolver=queries.tag)
+    annotation: types.Annotation = field(resolver=queries.annotation)
+    rois: list[types.Roi] = field(resolver=queries.rois)
+    roi: types.Roi = field(resolver=queries.roi)
 
     # --- experimenters & groups ----------------------------------------------
-    experimenters: list[types.Experimenter] = strawberry.field(resolver=queries.experimenters)
-    experimenter: types.Experimenter = strawberry.field(resolver=queries.experimenter)
-    current_experimenter: types.Experimenter = strawberry.field(resolver=queries.current_experimenter)
-    groups: list[types.ExperimenterGroup] = strawberry.field(resolver=queries.groups)
-    group: types.ExperimenterGroup = strawberry.field(resolver=queries.group)
+    experimenters: list[types.Experimenter] = field(resolver=queries.experimenters)
+    experimenter: types.Experimenter = field(resolver=queries.experimenter)
+    current_experimenter: types.Experimenter = field(resolver=queries.current_experimenter)
+    groups: list[types.ExperimenterGroup] = field(resolver=queries.groups)
+    group: types.ExperimenterGroup = field(resolver=queries.group)
 
 
 @strawberry.type
 class Mutation:
     # --- account layer ------------------------------------------------------
-    ensure_omero_user: types.OmeroUser = strawberry_django.mutation(resolver=mutations.ensure_omero_user)
-    delete_me: types.User = strawberry_django.mutation(resolver=mutations.delete_me)
+    ensure_omero_user: types.OmeroUser = account_mutation(resolver=mutations.ensure_omero_user)
+    delete_me: types.User = account_mutation(resolver=mutations.delete_me)
 
     # --- Project / Dataset / Image -------------------------------------------
-    create_project: types.Project = strawberry.field(resolver=mutations.create_project)
-    update_project: types.Project = strawberry.field(resolver=mutations.update_project)
-    delete_project: types.DeleteResult = strawberry.field(resolver=mutations.delete_project)
-    create_dataset: types.Dataset = strawberry.field(resolver=mutations.create_dataset)
-    update_dataset: types.Dataset = strawberry.field(resolver=mutations.update_dataset)
-    delete_dataset: types.DeleteResult = strawberry.field(resolver=mutations.delete_dataset)
-    update_image: types.Image = strawberry.field(resolver=mutations.update_image)
-    delete_image: types.DeleteResult = strawberry.field(resolver=mutations.delete_image)
+    create_project: types.Project = mutation(resolver=mutations.create_project)
+    update_project: types.Project = mutation(resolver=mutations.update_project)
+    delete_project: types.DeleteResult = mutation(resolver=mutations.delete_project)
+    create_dataset: types.Dataset = mutation(resolver=mutations.create_dataset)
+    update_dataset: types.Dataset = mutation(resolver=mutations.update_dataset)
+    delete_dataset: types.DeleteResult = mutation(resolver=mutations.delete_dataset)
+    update_image: types.Image = mutation(resolver=mutations.update_image)
+    delete_image: types.DeleteResult = mutation(resolver=mutations.delete_image)
 
     # --- Screen / Plate ------------------------------------------------------
-    create_screen: types.Screen = strawberry.field(resolver=mutations.create_screen)
-    update_screen: types.Screen = strawberry.field(resolver=mutations.update_screen)
-    delete_screen: types.DeleteResult = strawberry.field(resolver=mutations.delete_screen)
-    update_plate: types.Plate = strawberry.field(resolver=mutations.update_plate)
-    delete_plate: types.DeleteResult = strawberry.field(resolver=mutations.delete_plate)
+    create_screen: types.Screen = mutation(resolver=mutations.create_screen)
+    update_screen: types.Screen = mutation(resolver=mutations.update_screen)
+    delete_screen: types.DeleteResult = mutation(resolver=mutations.delete_screen)
+    update_plate: types.Plate = mutation(resolver=mutations.update_plate)
+    delete_plate: types.DeleteResult = mutation(resolver=mutations.delete_plate)
 
     # --- links ---------------------------------------------------------------
-    link_datasets: types.Project = strawberry.field(resolver=mutations.link_datasets)
-    unlink_datasets: types.Project = strawberry.field(resolver=mutations.unlink_datasets)
-    link_images: types.Dataset = strawberry.field(resolver=mutations.link_images)
-    unlink_images: types.Dataset = strawberry.field(resolver=mutations.unlink_images)
-    link_plates: types.Screen = strawberry.field(resolver=mutations.link_plates)
-    unlink_plates: types.Screen = strawberry.field(resolver=mutations.unlink_plates)
+    link_datasets: types.Project = mutation(resolver=mutations.link_datasets)
+    unlink_datasets: types.Project = mutation(resolver=mutations.unlink_datasets)
+    link_images: types.Dataset = mutation(resolver=mutations.link_images)
+    unlink_images: types.Dataset = mutation(resolver=mutations.unlink_images)
+    link_plates: types.Screen = mutation(resolver=mutations.link_plates)
+    unlink_plates: types.Screen = mutation(resolver=mutations.unlink_plates)
 
     # --- annotations ---------------------------------------------------------
-    create_tag: types.TagAnnotation = strawberry.field(resolver=mutations.create_tag)
-    create_comment: types.CommentAnnotation = strawberry.field(resolver=mutations.create_comment)
-    create_map_annotation: types.MapAnnotation = strawberry.field(resolver=mutations.create_map_annotation)
-    link_annotation: types.Annotation = strawberry.field(resolver=mutations.link_annotation)
-    unlink_annotation: types.Annotation = strawberry.field(resolver=mutations.unlink_annotation)
-    delete_annotation: types.DeleteResult = strawberry.field(resolver=mutations.delete_annotation)
+    create_tag: types.TagAnnotation = mutation(resolver=mutations.create_tag)
+    create_comment: types.CommentAnnotation = mutation(resolver=mutations.create_comment)
+    create_map_annotation: types.MapAnnotation = mutation(resolver=mutations.create_map_annotation)
+    link_annotation: types.Annotation = mutation(resolver=mutations.link_annotation)
+    unlink_annotation: types.Annotation = mutation(resolver=mutations.unlink_annotation)
+    delete_annotation: types.DeleteResult = mutation(resolver=mutations.delete_annotation)
 
     # --- ROIs ----------------------------------------------------------------
-    create_roi: types.Roi = strawberry.field(resolver=mutations.create_roi)
-    delete_roi: types.DeleteResult = strawberry.field(resolver=mutations.delete_roi)
+    create_roi: types.Roi = mutation(resolver=mutations.create_roi)
+    delete_roi: types.DeleteResult = mutation(resolver=mutations.delete_roi)
 
 
 class Schema(QuietErrorsSchema, kante.Schema):
@@ -140,3 +144,7 @@ schema = Schema(
         OmeroExtension,
     ],
 )
+
+# What stands for every scope and role here (`omero_ark_all`, `omero_ark_admin`). omero-ark has no
+# hub structures, so no `annotate_schema`: the contract's catch-alls are declared directly.
+declare_catch_alls(scope=contract.description.all_scope, role=contract.description.admin_role)

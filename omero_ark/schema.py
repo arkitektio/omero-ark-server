@@ -11,6 +11,7 @@ from omero_ark.logs import QuietErrorsSchema
 import kante
 import strawberry
 import strawberry_django
+from arkitekt_service.graphql import TelemetryExtension
 from authentikate.strawberry import AuthExtension, AuthSubscribeExtension
 from authentikate.strawberry.extension import AuthentikateExtension
 from koherent.strawberry.extension import KoherentExtension
@@ -138,6 +139,7 @@ schema = Schema(
     mutation=Mutation,
     types=types.INTERFACE_IMPLEMENTATIONS,
     extensions=[
+        TelemetryExtension,
         AuthentikateExtension,
         DjangoOptimizerExtension,
         KoherentExtension,

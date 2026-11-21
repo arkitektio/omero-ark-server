@@ -23,6 +23,7 @@ from .schema import schema
 from kante.path import dynamicpath
 from django.urls import path, include
 
+from arkitekt_service.service.views import answers_challenge
 from health_check.views import MainView
 from django.views.decorators.csrf import csrf_exempt
 
@@ -30,5 +31,5 @@ urlpatterns = [
     dynamicpath("admin/", admin.site.urls),
     dynamicpath("api/", include("bridge.urls")),
     dynamicpath("graphql", AsyncGraphQLView.as_view(schema=schema)),
-    dynamicpath("ht",  csrf_exempt(MainView.as_view()), name="health_check"),
+    dynamicpath("ht", answers_challenge(csrf_exempt(MainView.as_view())), name="health_check"),
 ]

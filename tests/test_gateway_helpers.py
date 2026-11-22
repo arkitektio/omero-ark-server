@@ -8,6 +8,7 @@ import pytest
 import strawberry
 
 from bridge import inputs
+from bridge.filters import ContainerOrder, SortDirection, order_by
 from bridge.gateway import hex_to_rgba_tuple, parse_points, rgba_int_to_hex
 
 
@@ -87,3 +88,13 @@ class TestShapeFromInput:
 
         with pytest.raises(ValueError):
             shape_from_input(inputs.ShapeInput(geometry=inputs.GeometryInput()))
+
+
+class TestOrderBy:
+    def test_default_is_none(self):
+        assert order_by(None) is None
+        assert order_by([]) is None
+
+    def test_keys_in_order(self):
+        ordering = [ContainerOrder(name=SortDirection.DESC), ContainerOrder(id=SortDirection.ASC)]
+        assert order_by(ordering) == "lower(obj.name) desc, obj.id asc"

@@ -54,24 +54,32 @@ def list_objects(
     opts: dict[str, Any] | None = None,
     offset: int | None = None,
     limit: int | None = None,
+    order_by: str | None = None,
     conn: BlitzGateway | None = None,
 ) -> list[BlitzObjectWrapper]:
     """List OMERO objects of ``kind`` with the filters the GraphQL layer offers.
 
-    ``ids``/``owner``/``opts`` are pushed down into the HQL query that
-    ``getObjects`` builds; ``search`` (case-insensitive substring match on the
-    name) and the offset/limit slice are applied in Python because OMERO's
-    ``getObjects`` has no name filter. Ordering is by id so pagination is stable.
+    ``ids``/``owner``/``opts``/``order_by`` are pushed down into the HQL query that
+    ``getObjects`` builds, and so is the page whenever there is no ``search``: a page
+    of 20 asks OMERO for 20 objects, not for all of them. ``search`` (case-insensitive
+    substring match on the name) is applied in Python because OMERO's ``getObjects``
+    has no name filter, so a searched list is filtered and then sliced here. Ties are
+    broken by id, so pagination is stable.
     """
     conn = conn or get_conn()
     query_opts: dict[str, Any] = dict(opts or {})
-    query_opts.setdefault("order_by", "obj.id")
+    query_opts["order_by"] = order_by or "obj.id"
     if owner is not None:
         query_opts["owner"] = int(owner)
 
     numeric_ids = [int(i) for i in ids] if ids is not None else None
     if numeric_ids is not None and not numeric_ids:
         return []
+
+    if not search and limit is not None:
+        query_opts["offset"] = offset or 0
+        query_opts["limit"] = limit
+        return list(conn.getObjects(kind, ids=numeric_ids, opts=query_opts))
 
     objects: Iterable[BlitzObjectWrapper] = conn.getObjects(kind, ids=numeric_ids, opts=query_opts)
 

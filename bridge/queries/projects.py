@@ -4,10 +4,11 @@ import strawberry
 from strawberry_django import pagination
 
 from bridge import filters, types
+from bridge.filters import order_by as hql_order_by
 from bridge.gateway import get_object, list_objects
 
 
-def projects(filters: filters.ProjectFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> List[types.Project]:
+def projects(filters: filters.ProjectFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None, ordering: list[filters.ContainerOrder] | None = None) -> List[types.Project]:
     """List the projects visible to the current OMERO user."""
     return [
         types.Project(value=p)
@@ -18,6 +19,7 @@ def projects(filters: filters.ProjectFilter | None = None, pagination: paginatio
             owner=filters.owner if filters else None,
             offset=pagination.offset if pagination else None,
             limit=pagination.limit if pagination else None,
+            order_by=hql_order_by(ordering),
         )
     ]
 

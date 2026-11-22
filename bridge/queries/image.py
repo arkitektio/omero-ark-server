@@ -4,10 +4,11 @@ import strawberry
 from strawberry_django import pagination
 
 from bridge import filters, types
+from bridge.filters import order_by as hql_order_by
 from bridge.gateway import get_object, list_objects
 
 
-def images(filters: filters.ImageFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> List[types.Image]:
+def images(filters: filters.ImageFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None, ordering: list[filters.ContainerOrder] | None = None) -> List[types.Image]:
     """List images, optionally restricted to one dataset or to orphans."""
     opts = {}
     if filters and filters.dataset is not None:
@@ -24,6 +25,7 @@ def images(filters: filters.ImageFilter | None = None, pagination: pagination.Of
             opts=opts,
             offset=pagination.offset if pagination else None,
             limit=pagination.limit if pagination else None,
+            order_by=hql_order_by(ordering),
         )
     ]
 

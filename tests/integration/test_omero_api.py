@@ -124,6 +124,41 @@ async def test_list_filters_push_down(aexecute, omero_root_user, seed):
     assert len(data["paged"]) == 1
 
 
+async def test_pages_and_ordering_are_asked_of_omero(aexecute, omero_root_user, seed):
+    import ezomero
+    from omero.gateway import BlitzGateway
+
+    conn = BlitzGateway("root", "omero", host="localhost", port=4064)
+    assert conn.connect()
+    try:
+        project = ezomero.post_project(conn, _uid("paged-proj"))
+        tag = uuid.uuid4().hex[:6]
+        ids = [ezomero.post_dataset(conn, f"{name}-{tag}", project_id=project) for name in ("b", "C", "a")]
+    finally:
+        conn.close()
+
+    await omero_root_user()
+    data = await _ok(
+        await aexecute(
+            """
+            query($project: ID!, $search: String!) {
+              newest: datasets(filters: {project: $project}, ordering: [{id: DESC}], pagination: {offset: 0, limit: 2}) { id }
+              second: datasets(filters: {project: $project}, ordering: [{id: DESC}], pagination: {offset: 1, limit: 1}) { id }
+              byName: datasets(filters: {project: $project}, ordering: [{name: ASC}]) { name }
+              searched: datasets(filters: {search: $search}, ordering: [{name: DESC}], pagination: {offset: 1, limit: 5}) { name }
+              oldestFirst: datasets(filters: {project: $project}) { id }
+            }
+            """,
+            {"project": str(project), "search": tag},
+        )
+    )
+    assert [d["id"] for d in data["newest"]] == [str(ids[2]), str(ids[1])]
+    assert [d["id"] for d in data["second"]] == [str(ids[1])]
+    assert [d["name"] for d in data["byName"]] == [f"a-{tag}", f"b-{tag}", f"C-{tag}"]
+    assert [d["name"] for d in data["searched"]] == [f"b-{tag}", f"a-{tag}"]
+    assert [d["id"] for d in data["oldestFirst"]] == [str(i) for i in ids]
+
+
 async def test_update_and_delete_project_without_children(aexecute, omero_root_user, seed):
     await omero_root_user()
     name = _uid("proj")

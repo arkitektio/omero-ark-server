@@ -1,7 +1,5 @@
 """Screen / Plate / Well / PlateAcquisition queries (the HCS hierarchy)."""
 
-from typing import List
-
 import strawberry
 from strawberry_django import pagination
 
@@ -9,7 +7,10 @@ from bridge import filters, types
 from bridge.gateway import get_object, list_objects
 
 
-def screens(filters: filters.ScreenFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> List[types.Screen]:
+def screens(
+    filters: filters.ScreenFilter | None = None,
+    pagination: pagination.OffsetPaginationInput | None = None,
+) -> list[types.Screen]:
     """List the screens visible to the current OMERO user."""
     return [
         types.Screen(value=s)
@@ -29,7 +30,10 @@ def screen(id: strawberry.ID) -> types.Screen:
     return types.Screen(value=get_object("Screen", id))
 
 
-def plates(filters: filters.PlateFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> List[types.Plate]:
+def plates(
+    filters: filters.PlateFilter | None = None,
+    pagination: pagination.OffsetPaginationInput | None = None,
+) -> list[types.Plate]:
     """List plates, optionally restricted to one screen or to orphans."""
     opts = {}
     if filters and filters.screen is not None:
@@ -55,7 +59,10 @@ def plate(id: strawberry.ID) -> types.Plate:
     return types.Plate(value=get_object("Plate", id))
 
 
-def wells(filters: filters.WellFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> List[types.Well]:
+def wells(
+    filters: filters.WellFilter | None = None,
+    pagination: pagination.OffsetPaginationInput | None = None,
+) -> list[types.Well]:
     """List wells, usually of one plate."""
     opts = {}
     if filters and filters.plate is not None:

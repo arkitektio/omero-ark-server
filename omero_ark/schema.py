@@ -6,24 +6,26 @@ that ``bridge.conn.OmeroExtension`` opens for the authenticated user.
 """
 
 from typing import Annotated
-from omero_ark.logs import QuietErrorsSchema
 
 import kante
 import strawberry
 import strawberry_django
 from arkitekt_service.graphql import TelemetryExtension
+from authentikate.catch_alls import declare_catch_alls
 from authentikate.strawberry import AuthExtension, AuthSubscribeExtension
 from authentikate.strawberry.extension import AuthentikateExtension
 from koherent.strawberry.extension import KoherentExtension
 from strawberry import ID as StrawberryID
 from strawberry_django.optimizer import DjangoOptimizerExtension
 
-from authentikate.catch_alls import declare_catch_alls
 from bridge import mutations, queries, types
 from bridge.conn import OmeroExtension
 from omero_ark.contract import EDITOR, contract
+from omero_ark.logs import QuietErrorsSchema
 
-ID = Annotated[StrawberryID, strawberry.argument(description="The unique identifier of an object")]
+ID = Annotated[
+    StrawberryID, strawberry.argument(description="The unique identifier of an object")
+]
 
 
 def field(scope: str = "omero_ark_read", **kwargs):
@@ -34,24 +36,34 @@ def field(scope: str = "omero_ark_read", **kwargs):
 def mutation(scope: str = "omero_ark_write", roles: list[str] | None = None, **kwargs):
     """A write: an app needs ``scope`` for it, a member one of ``roles`` (``omero_ark_editor`` unless it
     says otherwise; ``omero_ark_admin`` holds every role)."""
-    return strawberry.field(extensions=[AuthExtension(scopes=[scope], any_role_of=roles or [EDITOR])], **kwargs)
+    return strawberry.field(
+        extensions=[AuthExtension(scopes=[scope], any_role_of=roles or [EDITOR])],
+        **kwargs,
+    )
 
 
 def account_mutation(**kwargs) -> strawberry.mutation:
     """A write to the caller's own OMERO account: it stores (or drops) the credentials every read and
     write goes through, so it is a write like any other (``omero_ark_write``, ``omero_ark_editor``)."""
-    return strawberry_django.mutation(extensions=[AuthExtension(scopes=["omero_ark_write"], any_role_of=[EDITOR])], **kwargs)
+    return strawberry_django.mutation(
+        extensions=[AuthExtension(scopes=["omero_ark_write"], any_role_of=[EDITOR])],
+        **kwargs,
+    )
 
 
 def subscription(scope: str = "omero_ark_read", **kwargs) -> strawberry.subscription:
     """A subscription an app needs ``scope`` for (``omero_ark_read``, unless it says otherwise)."""
-    return kante.subscription(extensions=[AuthSubscribeExtension(scopes=[scope])], **kwargs)
+    return kante.subscription(
+        extensions=[AuthSubscribeExtension(scopes=[scope])], **kwargs
+    )
 
 
 @strawberry.type
 class Query:
     # --- account layer ------------------------------------------------------
-    omero_users: list[types.OmeroUser] = strawberry_django.field(extensions=[AuthExtension(scopes=["omero_ark_read"])])
+    omero_users: list[types.OmeroUser] = strawberry_django.field(
+        extensions=[AuthExtension(scopes=["omero_ark_read"])]
+    )
     me: types.User = field(resolver=queries.me)
 
     # --- Project / Dataset / Image -------------------------------------------
@@ -69,7 +81,9 @@ class Query:
     plate: types.Plate = field(resolver=queries.plate)
     wells: list[types.Well] = field(resolver=queries.wells)
     well: types.Well = field(resolver=queries.well)
-    plate_acquisition: types.PlateAcquisition = field(resolver=queries.plate_acquisition)
+    plate_acquisition: types.PlateAcquisition = field(
+        resolver=queries.plate_acquisition
+    )
 
     # --- annotations & ROIs --------------------------------------------------
     tags: list[types.TagAnnotation] = field(resolver=queries.tags)
@@ -81,7 +95,9 @@ class Query:
     # --- experimenters & groups ----------------------------------------------
     experimenters: list[types.Experimenter] = field(resolver=queries.experimenters)
     experimenter: types.Experimenter = field(resolver=queries.experimenter)
-    current_experimenter: types.Experimenter = field(resolver=queries.current_experimenter)
+    current_experimenter: types.Experimenter = field(
+        resolver=queries.current_experimenter
+    )
     groups: list[types.ExperimenterGroup] = field(resolver=queries.groups)
     group: types.ExperimenterGroup = field(resolver=queries.group)
 
@@ -89,7 +105,9 @@ class Query:
 @strawberry.type
 class Mutation:
     # --- account layer ------------------------------------------------------
-    ensure_omero_user: types.OmeroUser = account_mutation(resolver=mutations.ensure_omero_user)
+    ensure_omero_user: types.OmeroUser = account_mutation(
+        resolver=mutations.ensure_omero_user
+    )
     delete_me: types.User = account_mutation(resolver=mutations.delete_me)
 
     # --- Project / Dataset / Image -------------------------------------------
@@ -119,11 +137,17 @@ class Mutation:
 
     # --- annotations ---------------------------------------------------------
     create_tag: types.TagAnnotation = mutation(resolver=mutations.create_tag)
-    create_comment: types.CommentAnnotation = mutation(resolver=mutations.create_comment)
-    create_map_annotation: types.MapAnnotation = mutation(resolver=mutations.create_map_annotation)
+    create_comment: types.CommentAnnotation = mutation(
+        resolver=mutations.create_comment
+    )
+    create_map_annotation: types.MapAnnotation = mutation(
+        resolver=mutations.create_map_annotation
+    )
     link_annotation: types.Annotation = mutation(resolver=mutations.link_annotation)
     unlink_annotation: types.Annotation = mutation(resolver=mutations.unlink_annotation)
-    delete_annotation: types.DeleteResult = mutation(resolver=mutations.delete_annotation)
+    delete_annotation: types.DeleteResult = mutation(
+        resolver=mutations.delete_annotation
+    )
 
     # --- ROIs ----------------------------------------------------------------
     create_roi: types.Roi = mutation(resolver=mutations.create_roi)
@@ -149,4 +173,6 @@ schema = Schema(
 
 # What stands for every scope and role here (`omero_ark_all`, `omero_ark_admin`). omero-ark has no
 # hub structures, so no `annotate_schema`: the contract's catch-alls are declared directly.
-declare_catch_alls(scope=contract.description.all_scope, role=contract.description.admin_role)
+declare_catch_alls(
+    scope=contract.description.all_scope, role=contract.description.admin_role
+)

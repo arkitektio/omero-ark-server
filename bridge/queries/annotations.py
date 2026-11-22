@@ -1,7 +1,5 @@
 """Annotation queries. Tags get their own list because they are the one kind that is browsed on its own."""
 
-from typing import List
-
 import strawberry
 from strawberry_django import pagination
 
@@ -9,7 +7,10 @@ from bridge import filters, types
 from bridge.gateway import OmeroNotFound, get_object, list_objects
 
 
-def tags(filters: filters.TagFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> List[types.TagAnnotation]:
+def tags(
+    filters: filters.TagFilter | None = None,
+    pagination: pagination.OffsetPaginationInput | None = None,
+) -> list[types.TagAnnotation]:
     """List tag annotations. ``search`` matches the tag text."""
     conn_objects = list_objects(
         "TagAnnotation",
@@ -18,7 +19,9 @@ def tags(filters: filters.TagFilter | None = None, pagination: pagination.Offset
     )
     if filters and filters.search:
         needle = filters.search.lower()
-        conn_objects = [t for t in conn_objects if needle in (t.getValue() or "").lower()]
+        conn_objects = [
+            t for t in conn_objects if needle in (t.getValue() or "").lower()
+        ]
     if pagination:
         start = pagination.offset or 0
         end = None if pagination.limit is None else start + pagination.limit
@@ -36,5 +39,7 @@ def annotation(id: strawberry.ID) -> types.Annotation:
     wrapper = get_object("Annotation", id)
     wrapped = types.wrap_annotation(wrapper)
     if wrapped is None:
-        raise OmeroNotFound(f"Annotation {id} is of a kind omero-ark does not expose ({type(wrapper).__name__})")
+        raise OmeroNotFound(
+            f"Annotation {id} is of a kind omero-ark does not expose ({type(wrapper).__name__})"
+        )
     return wrapped

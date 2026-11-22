@@ -1,5 +1,3 @@
-from typing import List
-
 import strawberry
 from strawberry_django import pagination
 
@@ -7,7 +5,10 @@ from bridge import filters, types
 from bridge.gateway import get_object, list_objects
 
 
-def rois(filters: filters.RoiFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> List[types.Roi]:
+def rois(
+    filters: filters.RoiFilter | None = None,
+    pagination: pagination.OffsetPaginationInput | None = None,
+) -> list[types.Roi]:
     """List regions of interest, usually of one image."""
     opts = {"load_shapes": True}
     if filters and filters.image is not None:

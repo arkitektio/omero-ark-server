@@ -20,10 +20,16 @@ def create_dataset(info: Info, input: inputs.CreateDatasetInput) -> types.Datase
 
 def update_dataset(info: Info, input: inputs.UpdateObjectInput) -> types.Dataset:
     """Rename and/or re-describe a dataset."""
-    return types.Dataset(value=update_object("Dataset", input.id, name=input.name, description=input.description))
+    return types.Dataset(
+        value=update_object(
+            "Dataset", input.id, name=input.name, description=input.description
+        )
+    )
 
 
-def delete_dataset(info: Info, input: inputs.DeleteContainerInput) -> types.DeleteResult:
+def delete_dataset(
+    info: Info, input: inputs.DeleteContainerInput
+) -> types.DeleteResult:
     """Delete a dataset. Its images are deleted too only when deleteChildren is true; otherwise they become orphans."""
     delete_objects("Dataset", [input.id], delete_children=input.delete_children)
     return types.DeleteResult(id=input.id)

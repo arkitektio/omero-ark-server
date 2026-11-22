@@ -27,19 +27,50 @@ def shape_from_input(shape: inputs.ShapeInput):
     )
     g = shape.geometry
     if _set(g.rectangle):
-        return ez.Rectangle(x=g.rectangle.x, y=g.rectangle.y, width=g.rectangle.width, height=g.rectangle.height, label=shape.text, **common)
+        return ez.Rectangle(
+            x=g.rectangle.x,
+            y=g.rectangle.y,
+            width=g.rectangle.width,
+            height=g.rectangle.height,
+            label=shape.text,
+            **common,
+        )
     if _set(g.ellipse):
-        return ez.Ellipse(x=g.ellipse.x, y=g.ellipse.y, x_rad=g.ellipse.radius_x, y_rad=g.ellipse.radius_y, label=shape.text, **common)
+        return ez.Ellipse(
+            x=g.ellipse.x,
+            y=g.ellipse.y,
+            x_rad=g.ellipse.radius_x,
+            y_rad=g.ellipse.radius_y,
+            label=shape.text,
+            **common,
+        )
     if _set(g.point):
         return ez.Point(x=g.point.x, y=g.point.y, label=shape.text, **common)
     if _set(g.line):
-        return ez.Line(x1=g.line.x1, y1=g.line.y1, x2=g.line.x2, y2=g.line.y2, label=shape.text, **common)
+        return ez.Line(
+            x1=g.line.x1,
+            y1=g.line.y1,
+            x2=g.line.x2,
+            y2=g.line.y2,
+            label=shape.text,
+            **common,
+        )
     if _set(g.polygon):
-        return ez.Polygon(points=[(p.x, p.y) for p in g.polygon.points], label=shape.text, **common)
+        return ez.Polygon(
+            points=[(p.x, p.y) for p in g.polygon.points], label=shape.text, **common
+        )
     if _set(g.polyline):
-        return ez.Polyline(points=[(p.x, p.y) for p in g.polyline.points], label=shape.text, **common)
+        return ez.Polyline(
+            points=[(p.x, p.y) for p in g.polyline.points], label=shape.text, **common
+        )
     if _set(g.label):
-        return ez.Label(x=g.label.x, y=g.label.y, label=g.label.text, fontSize=g.label.font_size, **common)
+        return ez.Label(
+            x=g.label.x,
+            y=g.label.y,
+            label=g.label.text,
+            fontSize=g.label.font_size,
+            **common,
+        )
     raise ValueError("ShapeInput.geometry must set exactly one geometry")
 
 
@@ -49,7 +80,13 @@ def create_roi(info: Info, input: inputs.CreateRoiInput) -> types.Roi:
     shapes = [shape_from_input(s) for s in input.shapes]
     if not shapes:
         raise ValueError("A ROI needs at least one shape")
-    roi_id = ezomero.post_roi(conn, int(input.image_id), shapes, name=input.name, description=input.description)
+    roi_id = ezomero.post_roi(
+        conn,
+        int(input.image_id),
+        shapes,
+        name=input.name,
+        description=input.description,
+    )
     return types.Roi(value=get_object("Roi", roi_id, conn=conn))
 
 

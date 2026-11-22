@@ -12,4 +12,8 @@ def delete_image(info: Info, input: inputs.DeleteImageInput) -> types.DeleteResu
 
 def update_image(info: Info, input: inputs.UpdateObjectInput) -> types.Image:
     """Rename and/or re-describe an image."""
-    return types.Image(value=update_object("Image", input.id, name=input.name, description=input.description))
+    return types.Image(
+        value=update_object(
+            "Image", input.id, name=input.name, description=input.description
+        )
+    )

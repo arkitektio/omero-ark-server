@@ -17,7 +17,11 @@ def create_screen(info: Info, input: inputs.CreateScreenInput) -> types.Screen:
 
 def update_screen(info: Info, input: inputs.UpdateObjectInput) -> types.Screen:
     """Rename and/or re-describe a screen."""
-    return types.Screen(value=update_object("Screen", input.id, name=input.name, description=input.description))
+    return types.Screen(
+        value=update_object(
+            "Screen", input.id, name=input.name, description=input.description
+        )
+    )
 
 
 def delete_screen(info: Info, input: inputs.DeleteContainerInput) -> types.DeleteResult:
@@ -28,7 +32,11 @@ def delete_screen(info: Info, input: inputs.DeleteContainerInput) -> types.Delet
 
 def update_plate(info: Info, input: inputs.UpdateObjectInput) -> types.Plate:
     """Rename and/or re-describe a plate."""
-    return types.Plate(value=update_object("Plate", input.id, name=input.name, description=input.description))
+    return types.Plate(
+        value=update_object(
+            "Plate", input.id, name=input.name, description=input.description
+        )
+    )
 
 
 def delete_plate(info: Info, input: inputs.DeleteContainerInput) -> types.DeleteResult:

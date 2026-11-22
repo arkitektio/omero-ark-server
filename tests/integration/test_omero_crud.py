@@ -83,7 +83,14 @@ async def test_me_returns_authenticated_user(aexecute, omero_root_user):
 async def test_ensure_omero_user_stores_row(aexecute):
     res = await aexecute(
         ENSURE_OMERO_USER,
-        {"input": {"username": "root", "password": "omero", "host": "localhost", "port": 4064}},
+        {
+            "input": {
+                "username": "root",
+                "password": "omero",
+                "host": "localhost",
+                "port": 4064,
+            }
+        },
     )
     assert not res.errors, res.errors
     assert res.data["ensureOmeroUser"]["omeroUsername"] == "root"
@@ -97,7 +104,9 @@ async def test_create_project_then_list(aexecute, omero_root_user):
     await omero_root_user()
     name = f"proj-{uuid.uuid4().hex[:8]}"
 
-    created = await aexecute(CREATE_PROJECT, {"input": {"name": name, "description": "d"}})
+    created = await aexecute(
+        CREATE_PROJECT, {"input": {"name": name, "description": "d"}}
+    )
     assert not created.errors, created.errors
     assert created.data["createProject"]["name"] == name
 

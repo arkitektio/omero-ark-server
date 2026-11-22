@@ -44,9 +44,16 @@ def omero_connected(func):
             return HttpResponseForbidden("User is not authenticated")
         omero_user = models.OmeroUser.objects.filter(user=user).first()
         if omero_user is None:
-            return HttpResponseForbidden("User has no OMERO credentials; call ensureOmeroUser first")
+            return HttpResponseForbidden(
+                "User has no OMERO credentials; call ensureOmeroUser first"
+            )
 
-        conn = BlitzGateway(omero_user.omero_username, omero_user.omero_password, host=omero_user.omero_host, port=omero_user.omero_port)
+        conn = BlitzGateway(
+            omero_user.omero_username,
+            omero_user.omero_password,
+            host=omero_user.omero_host,
+            port=omero_user.omero_port,
+        )
         conn.connect()
         token = current_conn.set(conn)
         try:

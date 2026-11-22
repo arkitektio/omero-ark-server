@@ -35,7 +35,10 @@ class TestPoints:
         assert parse_points("1,2 3.5,4") == [(1.0, 2.0), (3.5, 4.0)]
 
     def test_legacy_bracketed_dialect_uses_first_list(self):
-        assert parse_points("points[1,2 3,4] points1[9,9] mask[]") == [(1.0, 2.0), (3.0, 4.0)]
+        assert parse_points("points[1,2 3,4] points1[9,9] mask[]") == [
+            (1.0, 2.0),
+            (3.0, 4.0),
+        ]
 
     def test_empty(self):
         assert parse_points(None) == []
@@ -44,13 +47,25 @@ class TestPoints:
 
 class TestShapeFromInput:
     def _shape(self, **geometry):
-        return inputs.ShapeInput(geometry=inputs.GeometryInput(**geometry), z=1, t=2, c=None, text="lbl", stroke_color="#ff0000", fill_color=None, stroke_width=2.0)
+        return inputs.ShapeInput(
+            geometry=inputs.GeometryInput(**geometry),
+            z=1,
+            t=2,
+            c=None,
+            text="lbl",
+            stroke_color="#ff0000",
+            fill_color=None,
+            stroke_width=2.0,
+        )
 
     def test_rectangle(self):
-        from bridge.mutations.rois import shape_from_input
         import ezomero.rois as ez
 
-        shape = shape_from_input(self._shape(rectangle=inputs.RectangleInput(x=1, y=2, width=3, height=4)))
+        from bridge.mutations.rois import shape_from_input
+
+        shape = shape_from_input(
+            self._shape(rectangle=inputs.RectangleInput(x=1, y=2, width=3, height=4))
+        )
         assert isinstance(shape, ez.Rectangle)
         assert (shape.x, shape.y, shape.width, shape.height) == (1, 2, 3, 4)
         assert (shape.z, shape.t, shape.c) == (1, 2, None)
@@ -60,28 +75,45 @@ class TestShapeFromInput:
 
     def test_unset_members_are_skipped(self):
         """Members a client omits arrive as UNSET; only the provided geometry may be picked."""
-        from bridge.mutations.rois import shape_from_input
         import ezomero.rois as ez
 
-        geometry = inputs.GeometryInput(polygon=inputs.PolygonInput(points=[inputs.VertexInput(x=0, y=0), inputs.VertexInput(x=1, y=1)]))
+        from bridge.mutations.rois import shape_from_input
+
+        geometry = inputs.GeometryInput(
+            polygon=inputs.PolygonInput(
+                points=[inputs.VertexInput(x=0, y=0), inputs.VertexInput(x=1, y=1)]
+            )
+        )
         assert geometry.rectangle is strawberry.UNSET
         shape = shape_from_input(inputs.ShapeInput(geometry=geometry))
         assert isinstance(shape, ez.Polygon)
         assert shape.points == [(0, 0), (1, 1)]
 
     def test_every_geometry_maps(self):
-        from bridge.mutations.rois import shape_from_input
         import ezomero.rois as ez
 
+        from bridge.mutations.rois import shape_from_input
+
         cases = {
-            "ellipse": (inputs.EllipseInput(x=1, y=1, radius_x=2, radius_y=3), ez.Ellipse),
+            "ellipse": (
+                inputs.EllipseInput(x=1, y=1, radius_x=2, radius_y=3),
+                ez.Ellipse,
+            ),
             "point": (inputs.PointInput(x=1, y=1), ez.Point),
             "line": (inputs.LineInput(x1=0, y1=0, x2=1, y2=1), ez.Line),
-            "polyline": (inputs.PolylineInput(points=[inputs.VertexInput(x=0, y=0)]), ez.Polyline),
+            "polyline": (
+                inputs.PolylineInput(points=[inputs.VertexInput(x=0, y=0)]),
+                ez.Polyline,
+            ),
             "label": (inputs.LabelInput(x=0, y=0, text="hi"), ez.Label),
         }
         for key, (value, expected) in cases.items():
-            assert isinstance(shape_from_input(inputs.ShapeInput(geometry=inputs.GeometryInput(**{key: value}))), expected), key
+            assert isinstance(
+                shape_from_input(
+                    inputs.ShapeInput(geometry=inputs.GeometryInput(**{key: value}))
+                ),
+                expected,
+            ), key
 
     def test_no_geometry_is_an_error(self):
         from bridge.mutations.rois import shape_from_input
@@ -96,5 +128,8 @@ class TestOrderBy:
         assert order_by([]) is None
 
     def test_keys_in_order(self):
-        ordering = [ContainerOrder(name=SortDirection.DESC), ContainerOrder(id=SortDirection.ASC)]
+        ordering = [
+            ContainerOrder(name=SortDirection.DESC),
+            ContainerOrder(id=SortDirection.ASC),
+        ]
         assert order_by(ordering) == "lower(obj.name) desc, obj.id asc"

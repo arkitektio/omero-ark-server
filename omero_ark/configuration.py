@@ -7,17 +7,23 @@ then the YAML file (``config.yaml`` where the service runs by default; override 
 with a ``ValidationError`` if they are not supplied via config or environment.
 """
 
-
+from arkitekt_service.server import settings as shared
+from arkitekt_service.server.settings import (
+    DjangoSettings,
+    PostgresSettings,
+    ServiceSettings,
+)
+from authentikate.base_models import AuthentikateSettings
 from pydantic import Field
 
-from arkitekt_service.server import settings as shared
-from arkitekt_service.server.settings import DjangoSettings, PostgresSettings, ServiceSettings
-from authentikate.base_models import AuthentikateSettings
 
 class RedisSettings(shared.RedisSettings):
     """Redis connection (channel layer / cache)."""
 
-    channel_prefix: str = Field(default="omeroark", description="Key prefix for the channels_redis channel layer. Must be unique per service: every service on a shared redis used to send under the same prefix, so identically-named groups (e.g. \"files\") delivered one service's events to another's subscribers.")
+    channel_prefix: str = Field(
+        default="omeroark",
+        description="Key prefix for the channels_redis channel layer. Must be unique per service: every service on a shared redis used to send under the same prefix, so identically-named groups (e.g. \"files\") delivered one service's events to another's subscribers.",
+    )
 
 
 class Settings(ServiceSettings):
@@ -26,6 +32,8 @@ class Settings(ServiceSettings):
     django: DjangoSettings = Field(description="Core Django settings.")
     postgres: PostgresSettings = Field(description="PostgreSQL connection.")
     redis: RedisSettings = Field(description="Redis connection.")
-    authentikate: AuthentikateSettings = Field(description="Token-verification config (authentikate).")
+    authentikate: AuthentikateSettings = Field(
+        description="Token-verification config (authentikate)."
+    )
     omero_host: str = Field(default="omero", description="OMERO server host.")
     omero_port: int = Field(default=4064, description="OMERO server port.")

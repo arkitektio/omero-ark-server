@@ -1,7 +1,5 @@
 """Experimenter (user) and group queries."""
 
-from typing import List
-
 import strawberry
 from strawberry_django import pagination
 
@@ -11,11 +9,18 @@ from bridge.gateway import get_object, list_objects
 
 
 def _matches(exp, needle: str) -> bool:
-    haystack = " ".join(filter(None, [exp.getName(), exp.getFirstName(), exp.getLastName(), exp.getEmail()])).lower()
+    haystack = " ".join(
+        filter(
+            None, [exp.getName(), exp.getFirstName(), exp.getLastName(), exp.getEmail()]
+        )
+    ).lower()
     return needle in haystack
 
 
-def experimenters(filters: filters.ExperimenterFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> List[types.Experimenter]:
+def experimenters(
+    filters: filters.ExperimenterFilter | None = None,
+    pagination: pagination.OffsetPaginationInput | None = None,
+) -> list[types.Experimenter]:
     """List OMERO experimenters. ``search`` matches login, first/last name and email."""
     objects = list_objects("Experimenter", ids=filters.ids if filters else None)
     if filters and filters.search:
@@ -38,7 +43,10 @@ def current_experimenter() -> types.Experimenter:
     return types.Experimenter(value=get_conn().getUser())
 
 
-def groups(filters: filters.ExperimenterGroupFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None) -> List[types.ExperimenterGroup]:
+def groups(
+    filters: filters.ExperimenterGroupFilter | None = None,
+    pagination: pagination.OffsetPaginationInput | None = None,
+) -> list[types.ExperimenterGroup]:
     """List OMERO groups."""
     return [
         types.ExperimenterGroup(value=g)

@@ -15,10 +15,16 @@ def create_project(info: Info, input: inputs.CreateProjectInput) -> types.Projec
 
 def update_project(info: Info, input: inputs.UpdateObjectInput) -> types.Project:
     """Rename and/or re-describe a project."""
-    return types.Project(value=update_object("Project", input.id, name=input.name, description=input.description))
+    return types.Project(
+        value=update_object(
+            "Project", input.id, name=input.name, description=input.description
+        )
+    )
 
 
-def delete_project(info: Info, input: inputs.DeleteContainerInput) -> types.DeleteResult:
+def delete_project(
+    info: Info, input: inputs.DeleteContainerInput
+) -> types.DeleteResult:
     """Delete a project. Its datasets (and their images) are deleted too only when deleteChildren is true."""
     delete_objects("Project", [input.id], delete_children=input.delete_children)
     return types.DeleteResult(id=input.id)

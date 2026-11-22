@@ -25,8 +25,14 @@ class OmeroUserInputModel(BaseModel):
 class OmeroUserInput:
     username: str
     password: str
-    host: str | None = field(default=settings.OMERO_HOST, description="The host for the omero user (relative to SERVER not client)")
-    port: int | None = field(default=settings.OMERO_PORT, description="The port for the omero user (relative to SERVER not client)")
+    host: str | None = field(
+        default=settings.OMERO_HOST,
+        description="The host for the omero user (relative to SERVER not client)",
+    )
+    port: int | None = field(
+        default=settings.OMERO_PORT,
+        description="The port for the omero user (relative to SERVER not client)",
+    )
 
 
 class CreateProjectInputModel(BaseModel):
@@ -48,7 +54,10 @@ class CreateDatasetInputModel(BaseModel):
 
 @pydantic.input(CreateDatasetInputModel)
 class CreateDatasetInput:
-    project_id: strawberry.ID | None = field(default=None, description="The project to link the new dataset into. Omit for an orphaned dataset.")
+    project_id: strawberry.ID | None = field(
+        default=None,
+        description="The project to link the new dataset into. Omit for an orphaned dataset.",
+    )
     name: str
     description: str | None = None
 
@@ -63,14 +72,18 @@ class DeleteImageInput:
 
 
 # --- generic update / delete ------------------------------------------------
-@strawberry.input(description="Rename and/or re-describe an object. Fields left null are not touched.")
+@strawberry.input(
+    description="Rename and/or re-describe an object. Fields left null are not touched."
+)
 class UpdateObjectInput:
     id: strawberry.ID
     name: str | None = None
     description: str | None = None
 
 
-@strawberry.input(description="Delete a container. Children are only deleted when deleteChildren is true; otherwise they are unlinked and become orphans.")
+@strawberry.input(
+    description="Delete a container. Children are only deleted when deleteChildren is true; otherwise they are unlinked and become orphans."
+)
 class DeleteContainerInput:
     id: strawberry.ID
     delete_children: bool = False
@@ -107,7 +120,9 @@ class ScreenPlatesInput:
 
 
 # --- annotations --------------------------------------------------------------
-@strawberry.input(description="The object an annotation is linked to (or should be linked to).")
+@strawberry.input(
+    description="The object an annotation is linked to (or should be linked to)."
+)
 class AnnotationTargetInput:
     type: OmeroObjectType
     id: strawberry.ID
@@ -117,7 +132,9 @@ class AnnotationTargetInput:
 class CreateTagInput:
     text: str
     description: str | None = None
-    target: AnnotationTargetInput | None = field(default=None, description="Link the new tag to this object right away.")
+    target: AnnotationTargetInput | None = field(
+        default=None, description="Link the new tag to this object right away."
+    )
 
 
 @strawberry.input
@@ -136,7 +153,10 @@ class KeyValueInput:
 class CreateMapAnnotationInput:
     target: AnnotationTargetInput
     values: list[KeyValueInput]
-    ns: str | None = field(default=None, description="Namespace. Defaults to OMERO's client map-annotation namespace so the pairs show up as editable key/value pairs in OMERO.web.")
+    ns: str | None = field(
+        default=None,
+        description="Namespace. Defaults to OMERO's client map-annotation namespace so the pairs show up as editable key/value pairs in OMERO.web.",
+    )
 
 
 @strawberry.input
@@ -214,13 +234,21 @@ class GeometryInput:
 @strawberry.input
 class ShapeInput:
     geometry: GeometryInput
-    z: int | None = field(default=None, description="Zero-based Z plane; null for all planes.")
-    t: int | None = field(default=None, description="Zero-based timepoint; null for all timepoints.")
-    c: int | None = field(default=None, description="Zero-based channel; null for all channels.")
+    z: int | None = field(
+        default=None, description="Zero-based Z plane; null for all planes."
+    )
+    t: int | None = field(
+        default=None, description="Zero-based timepoint; null for all timepoints."
+    )
+    c: int | None = field(
+        default=None, description="Zero-based channel; null for all channels."
+    )
     text: str | None = None
     stroke_color: str | None = field(default=None, description="#rrggbb or #rrggbbaa")
     fill_color: str | None = field(default=None, description="#rrggbb or #rrggbbaa")
-    stroke_width: float | None = field(default=None, description="Stroke width in pixels.")
+    stroke_width: float | None = field(
+        default=None, description="Stroke width in pixels."
+    )
 
 
 @strawberry.input

@@ -1,25 +1,33 @@
 import logging
-from omero.gateway import BlitzGateway
-from .models import OmeroUser
 from contextlib import contextmanager
-from django.conf import settings
 from contextvars import ContextVar
-from strawberry.extensions import SchemaExtension
+
 from asgiref.sync import sync_to_async
+from omero.gateway import BlitzGateway
+from strawberry.extensions import SchemaExtension
+
+from .models import OmeroUser
 
 logger = logging.getLogger(__name__)
 
 current_conn: ContextVar[any] = ContextVar("current_conn")
 
+
 @contextmanager
 def omerocon(user: OmeroUser):
-    conn = BlitzGateway(user.omero_username, user.omero_password, host=user.omero_host, port=user.omero_port)
+    conn = BlitzGateway(
+        user.omero_username,
+        user.omero_password,
+        host=user.omero_host,
+        port=user.omero_port,
+    )
     conn.connect()
 
     try:
         yield conn
     finally:
         conn.close()
+
 
 @sync_to_async
 def get_omero_user(context):
@@ -36,12 +44,18 @@ def get_conn():
     except LookupError:
         raise Exception("No OMERO connection found")
 
+
 class OmeroExtension(SchemaExtension):
     async def on_operation(self):
         try:
             user = await get_omero_user(self.execution_context.context)
 
-            conn = BlitzGateway(user.omero_username, user.omero_password, host=user.omero_host, port=user.omero_port)
+            conn = BlitzGateway(
+                user.omero_username,
+                user.omero_password,
+                host=user.omero_host,
+                port=user.omero_port,
+            )
             conn.connect()
             token = current_conn.set(conn)
 
@@ -52,5 +66,7 @@ class OmeroExtension(SchemaExtension):
                 conn.close()
         except Exception:
             # No OMERO connection for this operation; resolvers needing one fail with "No OMERO connection found".
-            logger.warning("Could not open an OMERO connection for this operation", exc_info=True)
+            logger.warning(
+                "Could not open an OMERO connection for this operation", exc_info=True
+            )
             yield

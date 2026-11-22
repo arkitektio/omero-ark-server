@@ -1,7 +1,8 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from bridge.models import Image
+
 from bridge.channel import image_broadcast
+from bridge.models import Image
 
 
 @receiver(post_save, sender=Image)

@@ -8,7 +8,8 @@ build on these so the GraphQL layer stays thin and uniform.
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Sequence
+from collections.abc import Iterable, Sequence
+from typing import Any
 
 import omero
 from omero.gateway import BlitzGateway, BlitzObjectWrapper
@@ -28,7 +29,9 @@ def unwrap(value: Any) -> Any:
     return _rtype_unwrap(value)
 
 
-def get_object(kind: str, id: str | int, conn: BlitzGateway | None = None) -> BlitzObjectWrapper:
+def get_object(
+    kind: str, id: str | int, conn: BlitzGateway | None = None
+) -> BlitzObjectWrapper:
     """Fetch a single wrapped OMERO object or raise a clear error.
 
     ``kind`` is an OMERO type name as understood by ``BlitzGateway.getObject``
@@ -41,7 +44,9 @@ def get_object(kind: str, id: str | int, conn: BlitzGateway | None = None) -> Bl
         raise OmeroNotFound(f"{kind} id must be an integer, got {id!r}")
     obj = conn.getObject(kind, numeric)
     if obj is None:
-        raise OmeroNotFound(f"{kind} {numeric} not found (or not visible to the current OMERO user)")
+        raise OmeroNotFound(
+            f"{kind} {numeric} not found (or not visible to the current OMERO user)"
+        )
     return obj
 
 
@@ -81,7 +86,9 @@ def list_objects(
         query_opts["limit"] = limit
         return list(conn.getObjects(kind, ids=numeric_ids, opts=query_opts))
 
-    objects: Iterable[BlitzObjectWrapper] = conn.getObjects(kind, ids=numeric_ids, opts=query_opts)
+    objects: Iterable[BlitzObjectWrapper] = conn.getObjects(
+        kind, ids=numeric_ids, opts=query_opts
+    )
 
     if search:
         needle = search.lower()
@@ -97,7 +104,14 @@ def list_objects(
     return objects
 
 
-def delete_objects(kind: str, ids: Sequence[str | int], *, delete_children: bool = False, delete_annotations: bool = False, conn: BlitzGateway | None = None) -> None:
+def delete_objects(
+    kind: str,
+    ids: Sequence[str | int],
+    *,
+    delete_children: bool = False,
+    delete_annotations: bool = False,
+    conn: BlitzGateway | None = None,
+) -> None:
     """Delete objects through OMERO's delete queue and wait for the result.
 
     Raises ``omero.CmdError`` (surfacing as a GraphQL error) if the server
@@ -163,18 +177,32 @@ def parse_points(points: str | None) -> list[tuple[float, float]]:
     return out
 
 
-def find_link_ids(link_type: str, parent_id: str | int, child_id: str | int, conn: BlitzGateway | None = None) -> list[int]:
+def find_link_ids(
+    link_type: str,
+    parent_id: str | int,
+    child_id: str | int,
+    conn: BlitzGateway | None = None,
+) -> list[int]:
     """Return the ids of ``link_type`` rows (e.g. ``DatasetImageLink``) joining a parent and a child."""
     conn = conn or get_conn()
     params = omero.sys.ParametersI()
     params.addLong("pid", int(parent_id))
     params.addLong("cid", int(child_id))
-    query = f"select l from {link_type} l where l.parent.id = :pid and l.child.id = :cid"
+    query = (
+        f"select l from {link_type} l where l.parent.id = :pid and l.child.id = :cid"
+    )
     links = conn.getQueryService().findAllByQuery(query, params, conn.SERVICE_OPTS)
     return [unwrap(link.id) for link in links]
 
 
-def update_object(kind: str, id: str | int, *, name: str | None = None, description: str | None = None, conn: BlitzGateway | None = None) -> BlitzObjectWrapper:
+def update_object(
+    kind: str,
+    id: str | int,
+    *,
+    name: str | None = None,
+    description: str | None = None,
+    conn: BlitzGateway | None = None,
+) -> BlitzObjectWrapper:
     """Set name and/or description on an object and save it. ``None`` leaves a field untouched."""
     conn = conn or get_conn()
     obj = get_object(kind, id, conn=conn)

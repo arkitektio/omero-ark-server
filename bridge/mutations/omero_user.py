@@ -1,10 +1,11 @@
-from kante.types import Info
-from bridge import types, models, inputs
-from django.conf import settings
-from omero.gateway import BlitzGateway
 import logging
 import socket
+
 import strawberry
+from kante.types import Info
+from omero.gateway import BlitzGateway
+
+from bridge import inputs, models, types
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ def isOpen(ip, port, timeout=1.0):
             # shutdown may fail if the socket is already closed on remote
             pass
         return True
-    except (socket.timeout, socket.error, OSError):
+    except (TimeoutError, OSError):
         return False
     finally:
         try:
@@ -35,10 +36,14 @@ def ensure_omero_user(info: Info, input: inputs.OmeroUserInput) -> types.OmeroUs
     # lets try if we can reach the omero-server
 
     if not isOpen(input.host, input.port):
-        raise Exception("Could nost connect to OMERO server. On the server, make sure that the OMERO server is running and that the port is open.")
+        raise Exception(
+            "Could nost connect to OMERO server. On the server, make sure that the OMERO server is running and that the port is open."
+        )
 
     try:
-        conn = BlitzGateway(input.username, input.password, host=input.host, port=input.port)
+        conn = BlitzGateway(
+            input.username, input.password, host=input.host, port=input.port
+        )
         conn.connect()
 
         # We are now logged in, conn.getUser() returns a User object
@@ -56,8 +61,10 @@ def ensure_omero_user(info: Info, input: inputs.OmeroUserInput) -> types.OmeroUs
         )
 
         return x
-    except Exception as e:
-        raise Exception("Could not connect to OMERO server with the user Credentials. The host and port are correct, but the username and password are probably not.")
+    except Exception:
+        raise Exception(
+            "Could not connect to OMERO server with the user Credentials. The host and port are correct, but the username and password are probably not."
+        )
 
 
 @strawberry.input

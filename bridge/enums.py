@@ -1,7 +1,6 @@
-from django.db.models import TextChoices
-import strawberry
 from enum import Enum
 
+import strawberry
 
 
 @strawberry.enum
@@ -21,7 +20,9 @@ class ScanDirection(str, Enum):
     SLICE_ROW_COLUMN_SNAKE = "slice_row_column_snake"
 
 
-@strawberry.enum(description="The kinds of OMERO object that can be the target of an annotation or link.")
+@strawberry.enum(
+    description="The kinds of OMERO object that can be the target of an annotation or link."
+)
 class OmeroObjectType(str, Enum):
     PROJECT = "Project"
     DATASET = "Dataset"

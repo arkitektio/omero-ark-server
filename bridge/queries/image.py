@@ -1,5 +1,3 @@
-from typing import List
-
 import strawberry
 from strawberry_django import pagination
 
@@ -8,7 +6,11 @@ from bridge.filters import order_by as hql_order_by
 from bridge.gateway import get_object, list_objects
 
 
-def images(filters: filters.ImageFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None, ordering: list[filters.ContainerOrder] | None = None) -> List[types.Image]:
+def images(
+    filters: filters.ImageFilter | None = None,
+    pagination: pagination.OffsetPaginationInput | None = None,
+    ordering: list[filters.ContainerOrder] | None = None,
+) -> list[types.Image]:
     """List images, optionally restricted to one dataset or to orphans."""
     opts = {}
     if filters and filters.dataset is not None:

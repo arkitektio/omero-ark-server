@@ -1,5 +1,3 @@
-from typing import List
-
 import strawberry
 from strawberry_django import pagination
 
@@ -8,7 +6,11 @@ from bridge.filters import order_by as hql_order_by
 from bridge.gateway import get_object, list_objects
 
 
-def datasets(filters: filters.DatasetFilter | None = None, pagination: pagination.OffsetPaginationInput | None = None, ordering: list[filters.ContainerOrder] | None = None) -> List[types.Dataset]:
+def datasets(
+    filters: filters.DatasetFilter | None = None,
+    pagination: pagination.OffsetPaginationInput | None = None,
+    ordering: list[filters.ContainerOrder] | None = None,
+) -> list[types.Dataset]:
     """List datasets, optionally restricted to one project or to orphans."""
     opts = {}
     if filters and filters.project is not None:

@@ -21,17 +21,14 @@ The hierarchy mirrors OMERO's own model and terminology:
 from __future__ import annotations
 
 import datetime
-from typing import Optional
-
-import strawberry
-import strawberry_django
-from django.contrib.auth import get_user_model
-from strawberry import auto
-from strawberry.types import Info
 
 import omero.gateway as og
 import omero.model
 import omero.sys
+import strawberry
+import strawberry_django
+from django.contrib.auth import get_user_model
+from strawberry import auto
 
 from bridge import models
 from bridge.conn import get_conn
@@ -57,7 +54,7 @@ class User:
     password: str
 
     @strawberry_django.field
-    def omero_user(self) -> Optional["OmeroUser"]:
+    def omero_user(self) -> OmeroUser | None:
         return models.OmeroUser.objects.filter(user=self).first()
 
 
@@ -74,17 +71,25 @@ class OmeroUser:
 # ---------------------------------------------------------------------------
 # Value types
 # ---------------------------------------------------------------------------
-@strawberry.type(description="A physical length as OMERO stores it: a value plus its unit.")
+@strawberry.type(
+    description="A physical length as OMERO stores it: a value plus its unit."
+)
 class Length:
     value: float
-    unit: str = strawberry.field(description="The OMERO UnitsLength name, e.g. MICROMETER")
+    unit: str = strawberry.field(
+        description="The OMERO UnitsLength name, e.g. MICROMETER"
+    )
     symbol: str = strawberry.field(description="The unit symbol, e.g. µm")
 
     @classmethod
-    def from_omero(cls, length: object | None) -> Optional["Length"]:
+    def from_omero(cls, length: object | None) -> Length | None:
         if length is None:
             return None
-        return cls(value=float(length.getValue()), unit=str(length.getUnit()), symbol=length.getSymbol())
+        return cls(
+            value=float(length.getValue()),
+            unit=str(length.getUnit()),
+            symbol=length.getSymbol(),
+        )
 
 
 @strawberry.type(description="What the current OMERO user may do with an object.")
@@ -132,12 +137,15 @@ class KeyValue:
 @strawberry.type(description="An OMERO user account (OMERO calls these experimenters).")
 class Experimenter:
     value: strawberry.Private[og.ExperimenterWrapper]
-    _full: strawberry.Private[Optional[og.ExperimenterWrapper]] = None
+    _full: strawberry.Private[og.ExperimenterWrapper | None] = None
 
     def _loaded(self) -> og.ExperimenterWrapper:
         """The experimenter OMERO attaches to an object's details is a shallow stub (login name only); reload it once for anything else."""
         if self._full is None:
-            self._full = get_conn().getObject("Experimenter", int(self.value.getId())) or self.value
+            self._full = (
+                get_conn().getObject("Experimenter", int(self.value.getId()))
+                or self.value
+            )
         return self._full
 
     @strawberry.field
@@ -149,11 +157,11 @@ class Experimenter:
         return self.value.getName() or self._loaded().getName() or ""
 
     @strawberry.field
-    def first_name(self) -> Optional[str]:
+    def first_name(self) -> str | None:
         return self._loaded().getFirstName()
 
     @strawberry.field
-    def last_name(self) -> Optional[str]:
+    def last_name(self) -> str | None:
         return self._loaded().getLastName()
 
     @strawberry.field
@@ -162,14 +170,16 @@ class Experimenter:
         return exp.getFullName() or exp.getName() or ""
 
     @strawberry.field
-    def email(self) -> Optional[str]:
+    def email(self) -> str | None:
         return self._loaded().getEmail()
 
     @strawberry.field
-    def institution(self) -> Optional[str]:
+    def institution(self) -> str | None:
         return self._loaded().getInstitution()
 
-    @strawberry.field(description="True if the experimenter is a member of the system group.")
+    @strawberry.field(
+        description="True if the experimenter is a member of the system group."
+    )
     def is_admin(self) -> bool:
         return any(int(unwrap(g.id)) == 0 for g in self._contained_groups())
 
@@ -178,15 +188,22 @@ class Experimenter:
         return any(int(unwrap(g.id)) == 1 for g in self._contained_groups())
 
     def _contained_groups(self) -> list:
-        return list(get_conn().getAdminService().containedGroups(int(self.value.getId())))
+        return list(
+            get_conn().getAdminService().containedGroups(int(self.value.getId()))
+        )
 
     @strawberry.field(description="The groups this experimenter is a member of.")
-    def groups(self) -> list["ExperimenterGroup"]:
+    def groups(self) -> list[ExperimenterGroup]:
         conn = get_conn()
-        return [ExperimenterGroup(value=og.ExperimenterGroupWrapper(conn, g)) for g in self._contained_groups()]
+        return [
+            ExperimenterGroup(value=og.ExperimenterGroupWrapper(conn, g))
+            for g in self._contained_groups()
+        ]
 
 
-@strawberry.type(description="An OMERO group. Data is owned by a user within a group; permissions are set per group.")
+@strawberry.type(
+    description="An OMERO group. Data is owned by a user within a group; permissions are set per group."
+)
 class ExperimenterGroup:
     value: strawberry.Private[og.ExperimenterGroupWrapper]
 
@@ -199,20 +216,26 @@ class ExperimenterGroup:
         return self.value.getName() or ""
 
     @strawberry.field
-    def description(self) -> Optional[str]:
+    def description(self) -> str | None:
         return self.value.getDescription()
 
     @strawberry.field(description="The members of this group.")
     def members(self) -> list[Experimenter]:
         conn = get_conn()
-        experimenters = conn.getAdminService().containedExperimenters(int(self.value.getId()))
-        return [Experimenter(value=og.ExperimenterWrapper(conn, e)) for e in experimenters]
+        experimenters = conn.getAdminService().containedExperimenters(
+            int(self.value.getId())
+        )
+        return [
+            Experimenter(value=og.ExperimenterWrapper(conn, e)) for e in experimenters
+        ]
 
 
 # ---------------------------------------------------------------------------
 # The shared OMERO object interface
 # ---------------------------------------------------------------------------
-@strawberry.interface(description="Fields every OMERO model object exposes: identity, ownership, dates, permissions and annotations.")
+@strawberry.interface(
+    description="Fields every OMERO model object exposes: identity, ownership, dates, permissions and annotations."
+)
 class OmeroObject:
     value: strawberry.Private[og.BlitzObjectWrapper]
 
@@ -229,7 +252,7 @@ class OmeroObject:
         return self.value.getDescription() or ""
 
     @strawberry.field(description="When the object was created in OMERO.")
-    def creation_date(self) -> Optional[datetime.datetime]:
+    def creation_date(self) -> datetime.datetime | None:
         try:
             return self.value.getDate()
         except Exception:
@@ -247,13 +270,25 @@ class OmeroObject:
     def permissions(self) -> Permissions:
         return Permissions(value=self.value)
 
-    @strawberry.field(description="All annotations linked to this object (tags, comments, key/value maps, files, ...).")
-    def annotations(self, ns: Optional[str] = None) -> list["Annotation"]:
-        return [wrap_annotation(a) for a in self.value.listAnnotations(ns=ns) if wrap_annotation(a) is not None]
+    @strawberry.field(
+        description="All annotations linked to this object (tags, comments, key/value maps, files, ...)."
+    )
+    def annotations(self, ns: str | None = None) -> list[Annotation]:
+        return [
+            wrap_annotation(a)
+            for a in self.value.listAnnotations(ns=ns)
+            if wrap_annotation(a) is not None
+        ]
 
-    @strawberry.field(description="The text values of the tag annotations linked to this object.")
+    @strawberry.field(
+        description="The text values of the tag annotations linked to this object."
+    )
     def tags(self) -> list[str]:
-        return [a.getValue() for a in self.value.listAnnotations() if isinstance(a, og.TagAnnotationWrapper)]
+        return [
+            a.getValue()
+            for a in self.value.listAnnotations()
+            if isinstance(a, og.TagAnnotationWrapper)
+        ]
 
 
 def _unique(wrappers):
@@ -270,7 +305,9 @@ def _unique(wrappers):
 # ---------------------------------------------------------------------------
 # Project / Dataset / Image
 # ---------------------------------------------------------------------------
-@strawberry.type(description="An OMERO original file: one of the files an image was imported from, or a file annotation's payload.")
+@strawberry.type(
+    description="An OMERO original file: one of the files an image was imported from, or a file annotation's payload."
+)
 class OriginalFile:
     value: strawberry.Private[og.OriginalFileWrapper]
 
@@ -283,19 +320,21 @@ class OriginalFile:
         return self.value.getName() or ""
 
     @strawberry.field
-    def path(self) -> Optional[str]:
+    def path(self) -> str | None:
         return self.value.getPath()
 
     @strawberry.field(description="File size in bytes.")
-    def size(self) -> Optional[int]:
+    def size(self) -> int | None:
         return self.value.getSize()
 
     @strawberry.field
-    def mimetype(self) -> Optional[str]:
+    def mimetype(self) -> str | None:
         return self.value.getMimetype()
 
 
-@strawberry.type(description="The set of files a group of images was imported from together.")
+@strawberry.type(
+    description="The set of files a group of images was imported from together."
+)
 class Fileset:
     value: strawberry.Private[og.FilesetWrapper]
 
@@ -308,7 +347,7 @@ class Fileset:
         return [OriginalFile(value=f) for f in self.value.listFiles()]
 
     @strawberry.field(description="The images that were imported from this fileset.")
-    def images(self) -> list["Image"]:
+    def images(self) -> list[Image]:
         return [Image(value=i) for i in self.value.copyImages()]
 
 
@@ -321,12 +360,14 @@ class Channel:
     def id(self) -> strawberry.ID:
         return strawberry.ID(str(self.value.getId()))
 
-    @strawberry.field(description="The display label: the channel name, or its wavelength / index if unnamed.")
+    @strawberry.field(
+        description="The display label: the channel name, or its wavelength / index if unnamed."
+    )
     def label(self) -> str:
         return self.value.getLabel() or ""
 
     @strawberry.field
-    def name(self) -> Optional[str]:
+    def name(self) -> str | None:
         return self.value.getName()
 
     @strawberry.field(description="The rendering colour as #rrggbb.")
@@ -334,48 +375,52 @@ class Channel:
         return "#" + self.value.getColor().getHtml()
 
     @strawberry.field
-    def emission_wave(self) -> Optional[Length]:
+    def emission_wave(self) -> Length | None:
         return Length.from_omero(self.value.getEmissionWave(units=True))
 
     @strawberry.field
-    def excitation_wave(self) -> Optional[Length]:
+    def excitation_wave(self) -> Length | None:
         return Length.from_omero(self.value.getExcitationWave(units=True))
 
     @strawberry.field(description="Lower end of the rendering window.")
-    def window_start(self) -> Optional[float]:
+    def window_start(self) -> float | None:
         return self.value.getWindowStart()
 
     @strawberry.field(description="Upper end of the rendering window.")
-    def window_end(self) -> Optional[float]:
+    def window_end(self) -> float | None:
         return self.value.getWindowEnd()
 
     @strawberry.field(description="Minimum pixel value of the channel.")
-    def window_min(self) -> Optional[float]:
+    def window_min(self) -> float | None:
         return self.value.getWindowMin()
 
     @strawberry.field(description="Maximum pixel value of the channel.")
-    def window_max(self) -> Optional[float]:
+    def window_max(self) -> float | None:
         return self.value.getWindowMax()
 
-    @strawberry.field(description="Whether the channel is switched on in the rendering settings.")
+    @strawberry.field(
+        description="Whether the channel is switched on in the rendering settings."
+    )
     def is_active(self) -> bool:
         return bool(self.value.isActive())
 
     @strawberry.field(description="The lookup table applied to the channel, if any.")
-    def lut(self) -> Optional[str]:
+    def lut(self) -> str | None:
         return self.value.getLut() or None
 
 
-@strawberry.type(description="An image in OMERO. The pixel data itself is served over the thumbnail/download REST endpoints.")
+@strawberry.type(
+    description="An image in OMERO. The pixel data itself is served over the thumbnail/download REST endpoints."
+)
 class Image(OmeroObject):
     value: strawberry.Private[og.ImageWrapper]
 
     @strawberry.field
-    def acquisition_date(self) -> Optional[datetime.datetime]:
+    def acquisition_date(self) -> datetime.datetime | None:
         return self.value.getAcquisitionDate()
 
     @strawberry.field(description="The name of the image's original file, when known.")
-    def original_file(self) -> Optional[str]:
+    def original_file(self) -> str | None:
         files = list(self.value.getImportedImageFiles())
         return files[0].getName() if files else None
 
@@ -400,39 +445,47 @@ class Image(OmeroObject):
         return int(self.value.getSizeT())
 
     @strawberry.field(description="The pixel data type, e.g. uint8, uint16, float.")
-    def pixels_type(self) -> Optional[str]:
+    def pixels_type(self) -> str | None:
         return self.value.getPixelsType()
 
     @strawberry.field
-    def physical_size_x(self) -> Optional[Length]:
+    def physical_size_x(self) -> Length | None:
         return Length.from_omero(self.value.getPixelSizeX(units=True))
 
     @strawberry.field
-    def physical_size_y(self) -> Optional[Length]:
+    def physical_size_y(self) -> Length | None:
         return Length.from_omero(self.value.getPixelSizeY(units=True))
 
     @strawberry.field
-    def physical_size_z(self) -> Optional[Length]:
+    def physical_size_z(self) -> Length | None:
         return Length.from_omero(self.value.getPixelSizeZ(units=True))
 
-    @strawberry.field(description="The default Z plane shown by the rendering settings.")
+    @strawberry.field(
+        description="The default Z plane shown by the rendering settings."
+    )
     def default_z(self) -> int:
         return int(self.value.getDefaultZ())
 
-    @strawberry.field(description="The default timepoint shown by the rendering settings.")
+    @strawberry.field(
+        description="The default timepoint shown by the rendering settings."
+    )
     def default_t(self) -> int:
         return int(self.value.getDefaultT())
 
     @strawberry.field
     def channels(self) -> list[Channel]:
-        return [Channel(value=c, index=i) for i, c in enumerate(self.value.getChannels())]
+        return [
+            Channel(value=c, index=i) for i, c in enumerate(self.value.getChannels())
+        ]
 
-    @strawberry.field(description="The datasets this image is linked into (an image can be in several).")
-    def datasets(self) -> list["Dataset"]:
+    @strawberry.field(
+        description="The datasets this image is linked into (an image can be in several)."
+    )
+    def datasets(self) -> list[Dataset]:
         return [Dataset(value=d) for d in _unique(self.value.listParents())]
 
     @strawberry.field(description="The fileset this image was imported with, if any.")
-    def fileset(self) -> Optional[Fileset]:
+    def fileset(self) -> Fileset | None:
         fs = self.value.getFileset()
         return Fileset(value=fs) if fs is not None else None
 
@@ -441,12 +494,24 @@ class Image(OmeroObject):
         return int(self.value.getROICount())
 
     @strawberry.field
-    def rois(self) -> list["Roi"]:
+    def rois(self) -> list[Roi]:
         conn = get_conn()
-        return [Roi(value=r) for r in conn.getObjects("Roi", opts={"image": int(self.value.getId()), "load_shapes": True, "order_by": "obj.id"})]
+        return [
+            Roi(value=r)
+            for r in conn.getObjects(
+                "Roi",
+                opts={
+                    "image": int(self.value.getId()),
+                    "load_shapes": True,
+                    "order_by": "obj.id",
+                },
+            )
+        ]
 
-    @strawberry.field(description="The well this image belongs to, when it is part of a plate.")
-    def well(self) -> Optional["Well"]:
+    @strawberry.field(
+        description="The well this image belongs to, when it is part of a plate."
+    )
+    def well(self) -> Well | None:
         conn = get_conn()
         params = omero.sys.ParametersI()
         params.addLong("iid", int(self.value.getId()))
@@ -468,7 +533,7 @@ class Dataset(OmeroObject):
         return int(self.value.countChildren())
 
     @strawberry.field(description="The projects this dataset is linked into.")
-    def projects(self) -> list["Project"]:
+    def projects(self) -> list[Project]:
         return [Project(value=p) for p in _unique(self.value.listParents())]
 
 
@@ -488,24 +553,28 @@ class Project(OmeroObject):
 # ---------------------------------------------------------------------------
 # Screen / Plate / Well (high-content screening)
 # ---------------------------------------------------------------------------
-@strawberry.type(description="A run of a plate through the microscope. Multi-run plates have one image per well per acquisition.")
+@strawberry.type(
+    description="A run of a plate through the microscope. Multi-run plates have one image per well per acquisition."
+)
 class PlateAcquisition(OmeroObject):
     value: strawberry.Private[og.PlateAcquisitionWrapper]
 
     @strawberry.field
-    def start_time(self) -> Optional[datetime.datetime]:
+    def start_time(self) -> datetime.datetime | None:
         return self.value.getStartTime()
 
     @strawberry.field
-    def end_time(self) -> Optional[datetime.datetime]:
+    def end_time(self) -> datetime.datetime | None:
         return self.value.getEndTime()
 
     @strawberry.field
-    def maximum_field_count(self) -> Optional[int]:
+    def maximum_field_count(self) -> int | None:
         return unwrap(self.value._obj.maximumFieldCount)
 
 
-@strawberry.type(description="One field of view in a well: the link between a well and an image.")
+@strawberry.type(
+    description="One field of view in a well: the link between a well and an image."
+)
 class WellSample:
     value: strawberry.Private[og.WellSampleWrapper]
 
@@ -514,21 +583,21 @@ class WellSample:
         return strawberry.ID(str(self.value.getId()))
 
     @strawberry.field
-    def image(self) -> Optional[Image]:
+    def image(self) -> Image | None:
         img = self.value.getImage()
         return Image(value=img) if img is not None else None
 
     @strawberry.field
-    def plate_acquisition(self) -> Optional[PlateAcquisition]:
+    def plate_acquisition(self) -> PlateAcquisition | None:
         pa = self.value.getPlateAcquisition()
         return PlateAcquisition(value=pa) if pa is not None else None
 
     @strawberry.field(description="Stage position of the field within the well.")
-    def position_x(self) -> Optional[Length]:
+    def position_x(self) -> Length | None:
         return Length.from_omero(self.value._obj.posX)
 
     @strawberry.field
-    def position_y(self) -> Optional[Length]:
+    def position_y(self) -> Length | None:
         return Length.from_omero(self.value._obj.posY)
 
 
@@ -548,8 +617,10 @@ class Well(OmeroObject):
     def position(self) -> str:
         return self.value.getWellPos()
 
-    @strawberry.field(description="The well colour as #rrggbbaa, when one was set at import.")
-    def color(self) -> Optional[str]:
+    @strawberry.field(
+        description="The well colour as #rrggbbaa, when one was set at import."
+    )
+    def color(self) -> str | None:
         obj = self.value._obj
         rgba = [unwrap(getattr(obj, k)) for k in ("red", "green", "blue", "alpha")]
         if any(v is None for v in rgba):
@@ -561,12 +632,18 @@ class Well(OmeroObject):
     def samples(self) -> list[WellSample]:
         return [WellSample(value=ws) for ws in self.value.listChildren()]
 
-    @strawberry.field(description="The images acquired in this well, one per field/acquisition.")
+    @strawberry.field(
+        description="The images acquired in this well, one per field/acquisition."
+    )
     def images(self) -> list[Image]:
-        return [Image(value=ws.getImage()) for ws in self.value.listChildren() if ws.getImage() is not None]
+        return [
+            Image(value=ws.getImage())
+            for ws in self.value.listChildren()
+            if ws.getImage() is not None
+        ]
 
     @strawberry.field
-    def plate(self) -> "Plate":
+    def plate(self) -> Plate:
         return Plate(value=self.value.getParent())
 
 
@@ -574,12 +651,16 @@ class Well(OmeroObject):
 class Plate(OmeroObject):
     value: strawberry.Private[og.PlateWrapper]
 
-    @strawberry.field(description="Declared row count, falling back to the highest occupied row when the plate does not declare one.")
+    @strawberry.field(
+        description="Declared row count, falling back to the highest occupied row when the plate does not declare one."
+    )
     def rows(self) -> int:
         declared = unwrap(self.value._obj.rows)
         return int(declared) if declared else int(self.value.getGridSize()["rows"])
 
-    @strawberry.field(description="Declared column count, falling back to the highest occupied column when the plate does not declare one.")
+    @strawberry.field(
+        description="Declared column count, falling back to the highest occupied column when the plate does not declare one."
+    )
     def columns(self) -> int:
         declared = unwrap(self.value._obj.columns)
         return int(declared) if declared else int(self.value.getGridSize()["columns"])
@@ -605,7 +686,7 @@ class Plate(OmeroObject):
         return [PlateAcquisition(value=pa) for pa in self.value.listPlateAcquisitions()]
 
     @strawberry.field(description="The screens this plate is linked into.")
-    def screens(self) -> list["Screen"]:
+    def screens(self) -> list[Screen]:
         return [Screen(value=s) for s in _unique(self.value.listParents())]
 
 
@@ -625,7 +706,9 @@ class Screen(OmeroObject):
 # ---------------------------------------------------------------------------
 # Annotations
 # ---------------------------------------------------------------------------
-@strawberry.interface(description="Metadata attached to an OMERO object. Concrete kinds carry their payload in kind-specific fields.")
+@strawberry.interface(
+    description="Metadata attached to an OMERO object. Concrete kinds carry their payload in kind-specific fields."
+)
 class Annotation:
     value: strawberry.Private[og.AnnotationWrapper]
 
@@ -633,16 +716,18 @@ class Annotation:
     def id(self) -> strawberry.ID:
         return strawberry.ID(str(self.value.getId()))
 
-    @strawberry.field(description="The namespace the annotation was written under, if any.")
-    def ns(self) -> Optional[str]:
+    @strawberry.field(
+        description="The namespace the annotation was written under, if any."
+    )
+    def ns(self) -> str | None:
         return self.value.getNs()
 
     @strawberry.field
-    def description(self) -> Optional[str]:
+    def description(self) -> str | None:
         return self.value.getDescription()
 
     @strawberry.field
-    def creation_date(self) -> Optional[datetime.datetime]:
+    def creation_date(self) -> datetime.datetime | None:
         try:
             return self.value.getDate()
         except Exception:
@@ -661,7 +746,9 @@ class Annotation:
         return Permissions(value=self.value)
 
 
-@strawberry.type(description="A tag. Tags are shared, reusable labels linked to many objects.")
+@strawberry.type(
+    description="A tag. Tags are shared, reusable labels linked to many objects."
+)
 class TagAnnotation(Annotation):
     value: strawberry.Private[og.TagAnnotationWrapper]
 
@@ -693,19 +780,21 @@ class FileAnnotation(Annotation):
     value: strawberry.Private[og.FileAnnotationWrapper]
 
     @strawberry.field
-    def file_name(self) -> Optional[str]:
+    def file_name(self) -> str | None:
         return self.value.getFileName()
 
     @strawberry.field(description="File size in bytes.")
-    def file_size(self) -> Optional[int]:
+    def file_size(self) -> int | None:
         return self.value.getFileSize()
 
     @strawberry.field
-    def file(self) -> Optional[OriginalFile]:
+    def file(self) -> OriginalFile | None:
         f = self.value.getFile()
         return OriginalFile(value=f) if f is not None else None
 
-    @strawberry.field(description="True for the companion file OMERO writes with the original metadata at import.")
+    @strawberry.field(
+        description="True for the companion file OMERO writes with the original metadata at import."
+    )
     def is_original_metadata(self) -> bool:
         return bool(self.value.isOriginalMetadata())
 
@@ -715,7 +804,7 @@ class LongAnnotation(Annotation):
     value: strawberry.Private[og.LongAnnotationWrapper]
 
     @strawberry.field
-    def long_value(self) -> Optional[int]:
+    def long_value(self) -> int | None:
         return self.value.getValue()
 
 
@@ -724,7 +813,7 @@ class DoubleAnnotation(Annotation):
     value: strawberry.Private[og.DoubleAnnotationWrapper]
 
     @strawberry.field
-    def double_value(self) -> Optional[float]:
+    def double_value(self) -> float | None:
         return self.value.getValue()
 
 
@@ -733,7 +822,7 @@ class BooleanAnnotation(Annotation):
     value: strawberry.Private[og.BooleanAnnotationWrapper]
 
     @strawberry.field
-    def boolean_value(self) -> Optional[bool]:
+    def boolean_value(self) -> bool | None:
         return self.value.getValue()
 
 
@@ -742,7 +831,7 @@ class TimestampAnnotation(Annotation):
     value: strawberry.Private[og.TimestampAnnotationWrapper]
 
     @strawberry.field
-    def time_value(self) -> Optional[datetime.datetime]:
+    def time_value(self) -> datetime.datetime | None:
         return self.value.getValue()
 
 
@@ -751,7 +840,7 @@ class TermAnnotation(Annotation):
     value: strawberry.Private[og.TermAnnotationWrapper]
 
     @strawberry.field
-    def term(self) -> Optional[str]:
+    def term(self) -> str | None:
         return self.value.getValue()
 
 
@@ -768,7 +857,7 @@ ANNOTATION_TYPES: dict[type, type] = {
 }
 
 
-def wrap_annotation(wrapper: og.AnnotationWrapper) -> Optional[Annotation]:
+def wrap_annotation(wrapper: og.AnnotationWrapper) -> Annotation | None:
     """Pick the GraphQL type for an annotation wrapper; ``None`` for kinds we do not expose (e.g. XML)."""
     for cls, gql in ANNOTATION_TYPES.items():
         if isinstance(wrapper, cls):
@@ -779,7 +868,9 @@ def wrap_annotation(wrapper: og.AnnotationWrapper) -> Optional[Annotation]:
 # ---------------------------------------------------------------------------
 # ROIs and shapes
 # ---------------------------------------------------------------------------
-@strawberry.interface(description="A 2D shape of a region of interest, positioned on one Z/T/C plane (or all, when unset).")
+@strawberry.interface(
+    description="A 2D shape of a region of interest, positioned on one Z/T/C plane (or all, when unset)."
+)
 class Shape:
     value: strawberry.Private[omero.model.Shape]
 
@@ -787,32 +878,38 @@ class Shape:
     def id(self) -> strawberry.ID:
         return strawberry.ID(str(unwrap(self.value.id)))
 
-    @strawberry.field(description="Zero-based Z plane, or null if the shape spans all planes.")
-    def z(self) -> Optional[int]:
+    @strawberry.field(
+        description="Zero-based Z plane, or null if the shape spans all planes."
+    )
+    def z(self) -> int | None:
         return unwrap(self.value.theZ)
 
-    @strawberry.field(description="Zero-based timepoint, or null if the shape spans all timepoints.")
-    def t(self) -> Optional[int]:
+    @strawberry.field(
+        description="Zero-based timepoint, or null if the shape spans all timepoints."
+    )
+    def t(self) -> int | None:
         return unwrap(self.value.theT)
 
-    @strawberry.field(description="Zero-based channel, or null if the shape applies to all channels.")
-    def c(self) -> Optional[int]:
+    @strawberry.field(
+        description="Zero-based channel, or null if the shape applies to all channels."
+    )
+    def c(self) -> int | None:
         return unwrap(self.value.theC)
 
     @strawberry.field(description="Stroke colour as #rrggbbaa.")
-    def stroke_color(self) -> Optional[str]:
+    def stroke_color(self) -> str | None:
         return rgba_int_to_hex(unwrap(self.value.strokeColor))
 
     @strawberry.field(description="Fill colour as #rrggbbaa.")
-    def fill_color(self) -> Optional[str]:
+    def fill_color(self) -> str | None:
         return rgba_int_to_hex(unwrap(self.value.fillColor))
 
     @strawberry.field
-    def stroke_width(self) -> Optional[Length]:
+    def stroke_width(self) -> Length | None:
         return Length.from_omero(self.value.strokeWidth)
 
     @strawberry.field(description="The text label drawn with the shape.")
-    def text(self) -> Optional[str]:
+    def text(self) -> str | None:
         return unwrap(self.value.textValue)
 
 
@@ -915,7 +1012,9 @@ class Label(Shape):
         return float(unwrap(self.value.y))
 
 
-@strawberry.type(description="A binary mask covering a rectangle. The mask bytes are not exposed over GraphQL.")
+@strawberry.type(
+    description="A binary mask covering a rectangle. The mask bytes are not exposed over GraphQL."
+)
 class Mask(Shape):
     @strawberry.field
     def x(self) -> float:
@@ -946,13 +1045,15 @@ SHAPE_TYPES: dict[type, type] = {
 }
 
 
-def wrap_shape(shape: omero.model.Shape) -> Optional[Shape]:
+def wrap_shape(shape: omero.model.Shape) -> Shape | None:
     """Pick the GraphQL type for a raw ``omero.model`` shape; ``None`` for unknown kinds."""
     gql = SHAPE_TYPES.get(type(shape))
     return gql(value=shape) if gql is not None else None
 
 
-@strawberry.type(description="A region of interest on an image: a named group of shapes.")
+@strawberry.type(
+    description="A region of interest on an image: a named group of shapes."
+)
 class Roi(OmeroObject):
     value: strawberry.Private[og.RoiWrapper]
 
@@ -964,7 +1065,11 @@ class Roi(OmeroObject):
     def shapes(self) -> list[Shape]:
         obj = self.value._obj
         if not obj.isShapesLoaded():
-            obj = get_conn().getObject("Roi", int(self.value.getId()), opts={"load_shapes": True})._obj
+            obj = (
+                get_conn()
+                .getObject("Roi", int(self.value.getId()), opts={"load_shapes": True})
+                ._obj
+            )
         return [s for s in (wrap_shape(sh) for sh in obj.copyShapes()) if s is not None]
 
     @strawberry.field

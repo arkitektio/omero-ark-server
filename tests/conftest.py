@@ -107,7 +107,9 @@ def _wait_for_omero(host, port, *, deadline_s=600):
                 except Exception:
                     pass
         time.sleep(5)
-    raise TimeoutError(f"OMERO server at {host}:{port} did not become ready in {deadline_s}s")
+    raise TimeoutError(
+        f"OMERO server at {host}:{port} did not become ready in {deadline_s}s"
+    )
 
 
 @pytest.fixture(scope="session")
@@ -159,7 +161,9 @@ def django_db_setup(django_db_setup, django_db_blocker):
         ContentType.objects.bulk_create(contenttypes, ignore_conflicts=True)
         Permission.objects.bulk_create(permissions, ignore_conflicts=True)
 
-    post_migrate.connect(restore, dispatch_uid="tests.restore_contenttypes_and_permissions")
+    post_migrate.connect(
+        restore, dispatch_uid="tests.restore_contenttypes_and_permissions"
+    )
     yield
 
     # Async tests run sync ORM in asgiref executor threads whose connections

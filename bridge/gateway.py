@@ -22,7 +22,7 @@ class OmeroNotFound(Exception):
     """Raised when an OMERO object the client asked for does not exist (or is not visible)."""
 
 
-def unwrap(value: Any) -> Any:
+def unwrap(value: object) -> Any:  # noqa: ANN401 -- as omero.rtypes.unwrap: whatever value the server's rtype held
     """Turn an OMERO rtype (rstring, rlong, ...) into a plain Python value; pass through everything else."""
     if value is None:
         return None
@@ -41,7 +41,7 @@ def get_object(
     try:
         numeric = int(id)
     except (TypeError, ValueError):
-        raise OmeroNotFound(f"{kind} id must be an integer, got {id!r}")
+        raise OmeroNotFound(f"{kind} id must be an integer, got {id!r}") from None
     obj = conn.getObject(kind, numeric)
     if obj is None:
         raise OmeroNotFound(

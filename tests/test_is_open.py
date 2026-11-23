@@ -8,7 +8,7 @@ import socket
 from bridge.mutations.omero_user import isOpen
 
 
-def test_open_port_returns_true():
+def test_open_port_returns_true() -> None:
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind(("127.0.0.1", 0))
@@ -20,7 +20,7 @@ def test_open_port_returns_true():
         server.close()
 
 
-def test_closed_port_returns_false():
+def test_closed_port_returns_false() -> None:
     # Bind to grab a free port, then close it so nothing is listening.
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(("127.0.0.1", 0))
@@ -29,7 +29,7 @@ def test_closed_port_returns_false():
     assert isOpen("127.0.0.1", port, timeout=0.5) is False
 
 
-def test_port_accepts_string():
+def test_port_accepts_string() -> None:
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind(("127.0.0.1", 0))

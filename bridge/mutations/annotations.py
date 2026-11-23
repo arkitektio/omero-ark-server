@@ -3,13 +3,16 @@
 import omero.constants.metadata
 import omero.gateway as og
 from kante.types import Info
+from omero.gateway import BlitzGateway, BlitzObjectWrapper
 
 from bridge import inputs, types
 from bridge.conn import get_conn
 from bridge.gateway import delete_objects, find_link_ids, get_object
 
 
-def _target(target: inputs.AnnotationTargetInput, conn):
+def _target(
+    target: inputs.AnnotationTargetInput, conn: BlitzGateway
+) -> BlitzObjectWrapper:
     return get_object(target.type.value, target.id, conn=conn)
 
 

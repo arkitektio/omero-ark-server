@@ -15,14 +15,24 @@ The structure mirrors the sibling ``elektro`` mount's harness.
 import os
 import socket
 import time
+from collections.abc import Iterator
+from typing import TYPE_CHECKING, Any
 
 import pytest
+
+if TYPE_CHECKING:
+    from kante.context import HttpContext
+    from pytest_django import DjangoDbBlocker
+    from strawberry.types import ExecutionResult
+
+    from bridge.models import OmeroUser
+    from tests.support import AExecute, OmeroRootUser
 
 
 # ---------------------------------------------------------------------------
 # Opt-in gating for the heavy OMERO integration tests.
 # ---------------------------------------------------------------------------
-def pytest_addoption(parser):
+def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption(
         "--integration",
         action="store_true",
@@ -31,7 +41,9 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
     markexpr = config.getoption("markexpr", default="") or ""
     # Run integration tests only when explicitly selected, either via the
     # --integration flag or a `-m` expression that mentions `integration`.
@@ -48,7 +60,7 @@ def pytest_collection_modifyitems(config, items):
 # ---------------------------------------------------------------------------
 # Backend stack (docker-compose via dokker).
 # ---------------------------------------------------------------------------
-def _wait_for_postgres(host, port, *, deadline_s=30):
+def _wait_for_postgres(host: str, port: int, *, deadline_s: float = 30) -> None:
     import psycopg
 
     deadline = time.monotonic() + deadline_s
@@ -71,7 +83,7 @@ def _wait_for_postgres(host, port, *, deadline_s=30):
             time.sleep(0.2)
 
 
-def _port_open(host, port, timeout=1.0):
+def _port_open(host: str, port: int, timeout: float = 1.0) -> bool:
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.settimeout(timeout)
     try:
@@ -83,7 +95,7 @@ def _port_open(host, port, timeout=1.0):
         s.close()
 
 
-def _wait_for_omero(host, port, *, deadline_s=600):
+def _wait_for_omero(host: str, port: int, *, deadline_s: float = 600) -> None:
     """Wait until OMERO accepts an ICE root login.
 
     OMERO is notoriously slow to come up (image import, schema bootstrap), so
@@ -113,7 +125,7 @@ def _wait_for_omero(host, port, *, deadline_s=600):
 
 
 @pytest.fixture(scope="session")
-def backend_stack():
+def backend_stack() -> Iterator[None]:
     from dokker import testing
 
     docker_compose_path = os.path.join(
@@ -132,13 +144,15 @@ def backend_stack():
 
 
 @pytest.fixture(scope="session")
-def django_db_modify_db_settings(backend_stack):
+def django_db_modify_db_settings(backend_stack: None) -> Iterator[None]:
     """Start the backend services before pytest-django configures the test DB."""
     yield
 
 
 @pytest.fixture(scope="session")
-def django_db_setup(django_db_setup, django_db_blocker):
+def django_db_setup(
+    django_db_setup: None, django_db_blocker: "DjangoDbBlocker"
+) -> Iterator[None]:
     # Snapshot contenttypes/permissions once and restore them on each flush
     # instead of letting post_migrate rebuild them per transaction=True test.
     from django.contrib.auth.models import Permission
@@ -155,7 +169,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
     )
     post_migrate.disconnect(create_contenttypes)
 
-    def restore(sender, **kwargs):
+    def restore(sender: object, **kwargs: object) -> None:
         if getattr(sender, "label", None) != "contenttypes":
             return
         ContentType.objects.bulk_create(contenttypes, ignore_conflicts=True)
@@ -183,7 +197,7 @@ def django_db_setup(django_db_setup, django_db_blocker):
 # Auth context + schema execution (mirrors elektro).
 # ---------------------------------------------------------------------------
 @pytest.fixture(scope="function")
-def authenticated_context(db, backend_stack):
+def authenticated_context(db: None, backend_stack: None) -> "HttpContext":
     """An HttpContext carrying the static "test" bearer token (sub="1")."""
     from authentikate.models import Client, User
     from kante.context import HttpContext, UniversalRequest
@@ -209,11 +223,15 @@ def authenticated_context(db, backend_stack):
 
 
 @pytest.fixture
-def aexecute(authenticated_context):
+def aexecute(authenticated_context: "HttpContext") -> "AExecute":
     """Run a GraphQL document against the schema with the authed context."""
     from omero_ark.schema import schema
 
-    async def _run(query, variables=None, context=None):
+    async def _run(
+        query: str,
+        variables: dict[str, Any] | None = None,
+        context: "HttpContext | None" = None,
+    ) -> "ExecutionResult":
         return await schema.execute(
             query,
             variable_values=variables or {},
@@ -224,7 +242,7 @@ def aexecute(authenticated_context):
 
 
 @pytest.fixture
-def omero_root_user(authenticated_context):
+def omero_root_user(authenticated_context: "HttpContext") -> "OmeroRootUser":
     """Create an OmeroUser row for the authed user, pointing at the live OMERO.
 
     With this present, OmeroExtension.on_operation (bridge/conn.py) opens a real
@@ -235,7 +253,7 @@ def omero_root_user(authenticated_context):
     from bridge import models
 
     @sync_to_async
-    def _make():
+    def _make() -> "OmeroUser":
         user = authenticated_context.request.user
         obj, _ = models.OmeroUser.objects.update_or_create(
             user=user,

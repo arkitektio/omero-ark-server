@@ -4,6 +4,8 @@ These need no OMERO server: they cover colour packing, OMERO's points string
 dialects, and the GraphQL -> ezomero shape translation.
 """
 
+from typing import Any
+
 import pytest
 import strawberry
 
@@ -13,40 +15,40 @@ from bridge.gateway import hex_to_rgba_tuple, parse_points, rgba_int_to_hex
 
 
 class TestColours:
-    def test_rgba_int_round_trips_through_signed_int32(self):
+    def test_rgba_int_round_trips_through_signed_int32(self) -> None:
         # OMERO stores opaque red as the signed int32 for 0xFF0000FF.
         packed = 0xFF0000FF - (1 << 32)
         assert rgba_int_to_hex(packed) == "#ff0000ff"
         assert rgba_int_to_hex(-1) == "#ffffffff"
         assert rgba_int_to_hex(None) is None
 
-    def test_hex_to_tuple_accepts_short_and_long_forms(self):
+    def test_hex_to_tuple_accepts_short_and_long_forms(self) -> None:
         assert hex_to_rgba_tuple("#ff0000") == (255, 0, 0, 255)
         assert hex_to_rgba_tuple("00ff0080") == (0, 255, 0, 128)
         assert hex_to_rgba_tuple(None) is None
 
-    def test_hex_to_tuple_rejects_garbage(self):
+    def test_hex_to_tuple_rejects_garbage(self) -> None:
         with pytest.raises(ValueError):
             hex_to_rgba_tuple("#abc")
 
 
 class TestPoints:
-    def test_plain_dialect(self):
+    def test_plain_dialect(self) -> None:
         assert parse_points("1,2 3.5,4") == [(1.0, 2.0), (3.5, 4.0)]
 
-    def test_legacy_bracketed_dialect_uses_first_list(self):
+    def test_legacy_bracketed_dialect_uses_first_list(self) -> None:
         assert parse_points("points[1,2 3,4] points1[9,9] mask[]") == [
             (1.0, 2.0),
             (3.0, 4.0),
         ]
 
-    def test_empty(self):
+    def test_empty(self) -> None:
         assert parse_points(None) == []
         assert parse_points("") == []
 
 
 class TestShapeFromInput:
-    def _shape(self, **geometry):
+    def _shape(self, **geometry: Any) -> inputs.ShapeInput:
         return inputs.ShapeInput(
             geometry=inputs.GeometryInput(**geometry),
             z=1,
@@ -58,7 +60,7 @@ class TestShapeFromInput:
             stroke_width=2.0,
         )
 
-    def test_rectangle(self):
+    def test_rectangle(self) -> None:
         import ezomero.rois as ez
 
         from bridge.mutations.rois import shape_from_input
@@ -73,7 +75,7 @@ class TestShapeFromInput:
         assert shape.fill_color is None
         assert shape.label == "lbl"
 
-    def test_unset_members_are_skipped(self):
+    def test_unset_members_are_skipped(self) -> None:
         """Members a client omits arrive as UNSET; only the provided geometry may be picked."""
         import ezomero.rois as ez
 
@@ -89,7 +91,7 @@ class TestShapeFromInput:
         assert isinstance(shape, ez.Polygon)
         assert shape.points == [(0, 0), (1, 1)]
 
-    def test_every_geometry_maps(self):
+    def test_every_geometry_maps(self) -> None:
         import ezomero.rois as ez
 
         from bridge.mutations.rois import shape_from_input
@@ -115,7 +117,7 @@ class TestShapeFromInput:
                 expected,
             ), key
 
-    def test_no_geometry_is_an_error(self):
+    def test_no_geometry_is_an_error(self) -> None:
         from bridge.mutations.rois import shape_from_input
 
         with pytest.raises(ValueError):
@@ -123,11 +125,11 @@ class TestShapeFromInput:
 
 
 class TestOrderBy:
-    def test_default_is_none(self):
+    def test_default_is_none(self) -> None:
         assert order_by(None) is None
         assert order_by([]) is None
 
-    def test_keys_in_order(self):
+    def test_keys_in_order(self) -> None:
         ordering = [
             ContainerOrder(name=SortDirection.DESC),
             ContainerOrder(id=SortDirection.ASC),

@@ -5,7 +5,7 @@ Queries and mutations are thin: every resolver lives in ``bridge.queries`` /
 that ``bridge.conn.OmeroExtension`` opens for the authenticated user.
 """
 
-from typing import Annotated
+from typing import Annotated, Any
 
 import kante
 import strawberry
@@ -28,12 +28,14 @@ ID = Annotated[
 ]
 
 
-def field(scope: str = "omero_ark_read", **kwargs):
+def field(scope: str = "omero_ark_read", **kwargs: Any) -> Any:  # noqa: ANN401 -- as strawberry.field: the value of `x: T = field()`
     "A field an app needs ``scope`` for (``omero_ark_read``, unless it says otherwise)."
     return strawberry.field(extensions=[AuthExtension(scopes=[scope])], **kwargs)
 
 
-def mutation(scope: str = "omero_ark_write", roles: list[str] | None = None, **kwargs):
+def mutation(
+    scope: str = "omero_ark_write", roles: list[str] | None = None, **kwargs: Any
+) -> Any:  # noqa: ANN401 -- as strawberry.field: the value of `x: T = mutation()`
     """A write: an app needs ``scope`` for it, a member one of ``roles`` (``omero_ark_editor`` unless it
     says otherwise; ``omero_ark_admin`` holds every role)."""
     return strawberry.field(
@@ -42,7 +44,7 @@ def mutation(scope: str = "omero_ark_write", roles: list[str] | None = None, **k
     )
 
 
-def account_mutation(**kwargs) -> strawberry.mutation:
+def account_mutation(**kwargs: Any) -> strawberry.mutation:
     """A write to the caller's own OMERO account: it stores (or drops) the credentials every read and
     write goes through, so it is a write like any other (``omero_ark_write``, ``omero_ark_editor``)."""
     return strawberry_django.mutation(
@@ -51,7 +53,9 @@ def account_mutation(**kwargs) -> strawberry.mutation:
     )
 
 
-def subscription(scope: str = "omero_ark_read", **kwargs) -> strawberry.subscription:
+def subscription(
+    scope: str = "omero_ark_read", **kwargs: Any
+) -> strawberry.subscription:
     """A subscription an app needs ``scope`` for (``omero_ark_read``, unless it says otherwise)."""
     return kante.subscription(
         extensions=[AuthSubscribeExtension(scopes=[scope])], **kwargs

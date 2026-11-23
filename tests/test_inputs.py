@@ -17,19 +17,19 @@ from bridge.inputs import (
 
 
 class TestOmeroUserInputModel:
-    def test_defaults_host_and_port_from_settings(self):
+    def test_defaults_host_and_port_from_settings(self) -> None:
         m = OmeroUserInputModel(username="root", password="omero")
         assert m.host == settings.OMERO_HOST
         assert m.port == settings.OMERO_PORT
 
-    def test_explicit_host_and_port_override_defaults(self):
+    def test_explicit_host_and_port_override_defaults(self) -> None:
         m = OmeroUserInputModel(
             username="root", password="omero", host="otherhost", port=4242
         )
         assert m.host == "otherhost"
         assert m.port == 4242
 
-    def test_username_and_password_required(self):
+    def test_username_and_password_required(self) -> None:
         with pytest.raises(ValidationError):
             OmeroUserInputModel(password="omero")
         with pytest.raises(ValidationError):
@@ -37,28 +37,28 @@ class TestOmeroUserInputModel:
 
 
 class TestCreateProjectInputModel:
-    def test_description_optional(self):
+    def test_description_optional(self) -> None:
         m = CreateProjectInputModel(name="proj")
         assert m.name == "proj"
         assert m.description is None
 
-    def test_name_required(self):
+    def test_name_required(self) -> None:
         with pytest.raises(ValidationError):
             CreateProjectInputModel(description="no name")
 
 
 class TestCreateDatasetInputModel:
-    def test_valid(self):
+    def test_valid(self) -> None:
         m = CreateDatasetInputModel(project_id="12", name="ds", description="d")
         assert m.project_id == "12"
         assert m.name == "ds"
 
-    def test_project_id_rejects_non_string(self):
+    def test_project_id_rejects_non_string(self) -> None:
         # project_id is typed as str; pydantic v2 does not coerce ints to str.
         with pytest.raises(ValidationError):
             CreateDatasetInputModel(project_id=12, name="ds")
 
-    def test_name_required_project_optional(self):
+    def test_name_required_project_optional(self) -> None:
         """A dataset may be created without a project: it is then an orphan, as in OMERO."""
         assert CreateDatasetInputModel(name="ds").project_id is None
         with pytest.raises(ValidationError):
@@ -66,9 +66,9 @@ class TestCreateDatasetInputModel:
 
 
 class TestDeleteImageInputModel:
-    def test_id_required(self):
+    def test_id_required(self) -> None:
         with pytest.raises(ValidationError):
             DeleteImageInputModel()
 
-    def test_valid(self):
+    def test_valid(self) -> None:
         assert DeleteImageInputModel(id="99").id == "99"

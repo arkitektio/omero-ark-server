@@ -11,13 +11,16 @@ from ezomero import (
     link_plates_to_screen,
 )
 from kante.types import Info
+from omero.gateway import BlitzGateway
 
 from bridge import inputs, types
 from bridge.conn import get_conn
 from bridge.gateway import delete_objects, find_link_ids, get_object
 
 
-def _unlink(link_type: str, parent_id: str, child_ids: list[str], conn) -> None:
+def _unlink(
+    link_type: str, parent_id: str, child_ids: list[str], conn: BlitzGateway
+) -> None:
     link_ids = [
         lid
         for cid in child_ids

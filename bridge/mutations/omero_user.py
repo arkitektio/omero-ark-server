@@ -10,7 +10,7 @@ from bridge import inputs, models, types
 logger = logging.getLogger(__name__)
 
 
-def isOpen(ip, port, timeout=1.0):
+def isOpen(ip: str, port: int | str, timeout: float = 1.0) -> bool:
     """Return True if TCP connect to (ip, port) succeeds within timeout seconds."""
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # set a timeout so connect() won't block indefinitely
@@ -61,10 +61,10 @@ def ensure_omero_user(info: Info, input: inputs.OmeroUserInput) -> types.OmeroUs
         )
 
         return x
-    except Exception:
+    except Exception as e:
         raise Exception(
             "Could not connect to OMERO server with the user Credentials. The host and port are correct, but the username and password are probably not."
-        )
+        ) from e
 
 
 @strawberry.input

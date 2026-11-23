@@ -1,6 +1,7 @@
 """Experimenter (user) and group queries."""
 
 import strawberry
+from omero.gateway import BlitzObjectWrapper
 from strawberry_django import pagination
 
 from bridge import filters, types
@@ -8,7 +9,7 @@ from bridge.conn import get_conn
 from bridge.gateway import get_object, list_objects
 
 
-def _matches(exp, needle: str) -> bool:
+def _matches(exp: BlitzObjectWrapper, needle: str) -> bool:
     haystack = " ".join(
         filter(
             None, [exp.getName(), exp.getFirstName(), exp.getLastName(), exp.getEmail()]

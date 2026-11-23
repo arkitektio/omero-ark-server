@@ -21,6 +21,8 @@ The hierarchy mirrors OMERO's own model and terminology:
 from __future__ import annotations
 
 import datetime
+from collections.abc import Iterable
+from typing import TypeVar
 
 import omero.gateway as og
 import omero.model
@@ -33,6 +35,8 @@ from strawberry import auto
 from bridge import models
 from bridge.conn import get_conn
 from bridge.gateway import parse_points, rgba_int_to_hex, unwrap
+
+_W = TypeVar("_W", bound=og.BlitzObjectWrapper)
 
 
 # ---------------------------------------------------------------------------
@@ -291,7 +295,7 @@ class OmeroObject:
         ]
 
 
-def _unique(wrappers):
+def _unique(wrappers: Iterable[_W]) -> list[_W]:
     """De-duplicate wrappers by id, keeping order. OMERO allows several links between the same pair, which would otherwise show a parent twice."""
     seen: set[int] = set()
     out = []

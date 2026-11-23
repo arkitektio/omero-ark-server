@@ -1,7 +1,10 @@
 # Create your views here.
+from collections.abc import Sequence
+
 from django.conf import settings
 from django.http import (
     Http404,
+    HttpRequest,
     HttpResponse,
     StreamingHttpResponse,
 )
@@ -21,17 +24,17 @@ logger = logging.getLogger(__name__)  #
 class ConnCleaningHttpResponse(StreamingHttpResponse):
     """Extension of L{HttpResponse} which closes the OMERO connection."""
 
-    def close(self):
+    def close(self) -> None:
         super().close()
         try:
-            logger.debug("Closing OMERO connection in %r" % self)
+            logger.debug("Closing OMERO connection in %r", self)
             if self.conn is not None and self.conn.c is not None:
                 self.conn.close(hard=False)
         except Exception:
             logger.error("Failed to clean up connection.", exc_info=True)
 
 
-def _render_thumbnail(id, size=None):
+def _render_thumbnail(id: str | int, size: Sequence[int | str] | None = None) -> bytes:
     """
     Returns a jpeg with the rendered thumbnail for image 'iid'
 
@@ -46,7 +49,7 @@ def _render_thumbnail(id, size=None):
 
     img = conn.getObject("Image", id)
     if img is None:
-        logger.debug("(b)Image %s not found..." % (str(id)))
+        logger.debug("(b)Image %s not found...", id)
         raise Http404("Failed to render thumbnail")
     else:
         jpeg_data = img.getThumbnail(size=size, direct=True, rdefId=None, z=0, t=0)
@@ -58,7 +61,7 @@ def _render_thumbnail(id, size=None):
 
 @omero_connected
 @cache_page(CACHE_TTL)
-def render_thumbnail(request, id):
+def render_thumbnail(request: HttpRequest, id: str) -> HttpResponse:
     """
     Returns an HttpResponse wrapped jpeg with the rendered thumbnail for image
     'iid'
@@ -76,7 +79,7 @@ def render_thumbnail(request, id):
 
 @omero_connected
 @cache_page(CACHE_TTL)
-def download(request, id):
+def download(request: HttpRequest, id: str) -> HttpResponse:
     """
     Returns an HttpResponse wrapped jpeg with the rendered thumbnail for image
     'iid'

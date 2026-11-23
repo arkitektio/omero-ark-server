@@ -7,9 +7,14 @@ gateway; the tests then exercise everything through GraphQL.
 """
 
 import uuid
+from collections.abc import Iterator
+from typing import Any
 
 import numpy as np
 import pytest
+from strawberry.types import ExecutionResult
+
+from tests.support import AExecute, OmeroRootUser, Seeded
 
 pytestmark = [
     pytest.mark.integration,
@@ -23,7 +28,7 @@ def _uid(prefix: str) -> str:
 
 
 @pytest.fixture(scope="module")
-def seed(backend_stack):
+def seed(backend_stack: None) -> Iterator[Seeded]:
     """Seed OMERO with a project > dataset > image and a screen > plate > well > image."""
     import ezomero
     from omero.gateway import BlitzGateway
@@ -70,13 +75,16 @@ def seed(backend_stack):
         conn.close()
 
 
-async def _ok(res):
+async def _ok(res: ExecutionResult) -> dict[str, Any]:
     assert not res.errors, res.errors
+    assert res.data is not None
     return res.data
 
 
 # --- containers -----------------------------------------------------------------
-async def test_image_metadata_and_ancestry(aexecute, omero_root_user, seed):
+async def test_image_metadata_and_ancestry(
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     data = await _ok(
         await aexecute(
@@ -122,7 +130,9 @@ async def test_image_metadata_and_ancestry(aexecute, omero_root_user, seed):
     assert img["roiCount"] == 0
 
 
-async def test_list_filters_push_down(aexecute, omero_root_user, seed):
+async def test_list_filters_push_down(
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     data = await _ok(
         await aexecute(
@@ -149,7 +159,9 @@ async def test_list_filters_push_down(aexecute, omero_root_user, seed):
     assert len(data["paged"]) == 1
 
 
-async def test_pages_and_ordering_are_asked_of_omero(aexecute, omero_root_user, seed):
+async def test_pages_and_ordering_are_asked_of_omero(
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     import ezomero
     from omero.gateway import BlitzGateway
 
@@ -188,8 +200,8 @@ async def test_pages_and_ordering_are_asked_of_omero(aexecute, omero_root_user, 
 
 
 async def test_update_and_delete_project_without_children(
-    aexecute, omero_root_user, seed
-):
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     name = _uid("proj")
     created = await _ok(
@@ -234,8 +246,8 @@ async def test_update_and_delete_project_without_children(
 
 
 async def test_delete_dataset_with_children_removes_images(
-    aexecute, omero_root_user, seed
-):
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     import ezomero
     from omero.gateway import BlitzGateway
@@ -264,7 +276,9 @@ async def test_delete_dataset_with_children_removes_images(
     assert gone.errors and "not found" in gone.errors[0].message
 
 
-async def test_link_and_unlink_images_and_datasets(aexecute, omero_root_user, seed):
+async def test_link_and_unlink_images_and_datasets(
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     ds = await _ok(
         await aexecute(
@@ -314,7 +328,9 @@ async def test_link_and_unlink_images_and_datasets(aexecute, omero_root_user, se
     assert did not in [d["id"] for d in pu["unlinkDatasets"]["datasets"]]
 
 
-async def test_update_image(aexecute, omero_root_user, seed):
+async def test_update_image(
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     name = _uid("renamed")
     data = await _ok(
@@ -327,7 +343,9 @@ async def test_update_image(aexecute, omero_root_user, seed):
 
 
 # --- HCS ------------------------------------------------------------------------
-async def test_screen_plate_well_hierarchy(aexecute, omero_root_user, seed):
+async def test_screen_plate_well_hierarchy(
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     data = await _ok(
         await aexecute(
@@ -364,7 +382,9 @@ async def test_screen_plate_well_hierarchy(aexecute, omero_root_user, seed):
     assert [w["id"] for w in data["wells"]] == [str(seed["well"])]
 
 
-async def test_screen_mutations_and_plate_links(aexecute, omero_root_user, seed):
+async def test_screen_mutations_and_plate_links(
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     created = await _ok(
         await aexecute(
@@ -409,7 +429,9 @@ async def test_screen_mutations_and_plate_links(aexecute, omero_root_user, seed)
 
 
 # --- annotations ----------------------------------------------------------------
-async def test_tags_end_to_end(aexecute, omero_root_user, seed):
+async def test_tags_end_to_end(
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     text = _uid("tag")
     created = await _ok(
@@ -440,8 +462,9 @@ async def test_tags_end_to_end(aexecute, omero_root_user, seed):
 
     listed = await _ok(
         await aexecute(
-            "query($s: String!) { tags(filters: {search: $s}) { id } tag(id: %s) { text } }"
-            % tag["id"],
+            "query($s: String!) { tags(filters: {search: $s}) { id } tag(id: "
+            + str(tag["id"])
+            + ") { text } }",
             {"s": text[-6:]},
         )
     )
@@ -497,7 +520,9 @@ async def test_tags_end_to_end(aexecute, omero_root_user, seed):
     assert gone.errors and "not found" in gone.errors[0].message
 
 
-async def test_comment_and_map_annotations(aexecute, omero_root_user, seed):
+async def test_comment_and_map_annotations(
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     target = {"type": "PROJECT", "id": str(seed["project"])}
     comment = await _ok(
@@ -553,7 +578,9 @@ async def test_comment_and_map_annotations(aexecute, omero_root_user, seed):
 
 
 # --- ROIs -----------------------------------------------------------------------
-async def test_rois_end_to_end(aexecute, omero_root_user, seed):
+async def test_rois_end_to_end(
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     created = await _ok(
         await aexecute(
@@ -661,7 +688,9 @@ async def test_rois_end_to_end(aexecute, omero_root_user, seed):
 
 
 # --- experimenters --------------------------------------------------------------
-async def test_experimenters_and_groups(aexecute, omero_root_user, seed):
+async def test_experimenters_and_groups(
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     data = await _ok(
         await aexecute(
@@ -685,7 +714,9 @@ async def test_experimenters_and_groups(aexecute, omero_root_user, seed):
     assert data["experimenter"]["omeName"] == "root"
 
 
-async def test_missing_objects_report_not_found(aexecute, omero_root_user, seed):
+async def test_missing_objects_report_not_found(
+    aexecute: AExecute, omero_root_user: OmeroRootUser, seed: Seeded
+) -> None:
     await omero_root_user()
     for query in (
         '{ image(id: "999999999") { id } }',

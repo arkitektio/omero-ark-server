@@ -6,6 +6,7 @@ import pytest
 from arkitekt_service.graphql import scope_gaps
 from kante.context import HttpContext, UniversalRequest
 from strawberry.http.temporal_response import TemporalResponse
+from strawberry.types import ExecutionResult
 
 from omero_ark.schema import schema
 
@@ -22,18 +23,20 @@ def _as(token: str) -> HttpContext:
     )
 
 
-def _reason(result) -> str | None:
+def _reason(result: ExecutionResult) -> str | None:
     return result.errors[0].extensions.get("reason") if result.errors else None
 
 
-def test_every_root_field_asks_for_a_scope_omero_ark_declares():
+def test_every_root_field_asks_for_a_scope_omero_ark_declares() -> None:
     assert scope_gaps(schema) == []
 
 
 @pytest.mark.integration
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
-async def test_an_app_granted_reads_reads_and_writes_nothing(backend_stack):
+async def test_an_app_granted_reads_reads_and_writes_nothing(
+    backend_stack: None,
+) -> None:
     assert (await schema.execute(ME, context_value=_as("readertest"))).errors is None
     refused = await schema.execute(REGISTER_ROOT, context_value=_as("readertest"))
     assert _reason(refused) == "INSUFFICIENT_SCOPE"
@@ -42,6 +45,6 @@ async def test_an_app_granted_reads_reads_and_writes_nothing(backend_stack):
 @pytest.mark.integration
 @pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
-async def test_the_all_scope_writes(backend_stack):
+async def test_the_all_scope_writes(backend_stack: None) -> None:
     made = await schema.execute(REGISTER_ROOT, context_value=_as("test"))
     assert made.errors is None, made.errors

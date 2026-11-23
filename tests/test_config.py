@@ -3,23 +3,25 @@
 Standalone — needs no database; run with ``uv run pytest tests/test_config.py``.
 """
 
+import pytest
+
 from omero_ark.configuration import Settings
 
 
-def test_config_yaml_validates():
+def test_config_yaml_validates() -> None:
     """The service's own config.yaml parses into the typed schema."""
     s = Settings()
     assert s.postgres.db_name
     assert s.redis.host
 
 
-def test_env_override(monkeypatch):
+def test_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
     """Env vars override the YAML file (nested via ``__``)."""
     monkeypatch.setenv("POSTGRES__PASSWORD", "from-env-test")
     assert Settings().postgres.password == "from-env-test"
 
 
-def test_omero_defaults():
+def test_omero_defaults() -> None:
     """omero_host/omero_port fall back to their schema defaults.
 
     config.yaml carries a nested ``omero:`` block, but the schema declares flat
@@ -31,7 +33,7 @@ def test_omero_defaults():
     assert s.omero_port == 4064
 
 
-def test_omero_host_env_override(monkeypatch):
+def test_omero_host_env_override(monkeypatch: pytest.MonkeyPatch) -> None:
     """OMERO_HOST env var overrides the omero_host default."""
     monkeypatch.setenv("OMERO_HOST", "from-env-omero")
     assert Settings().omero_host == "from-env-omero"

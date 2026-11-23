@@ -12,6 +12,9 @@ so tests create uniquely-named projects/datasets to stay independent.
 import uuid
 
 import pytest
+from django.test import Client
+
+from tests.support import AExecute, OmeroRootUser
 
 pytestmark = [
     pytest.mark.integration,
@@ -61,7 +64,7 @@ mutation DeleteImage($input: DeleteImageInput!) {
 
 
 # ---------------------------------------------------------------------------
-async def test_smoke_omero_root_login(backend_stack):
+async def test_smoke_omero_root_login(backend_stack: None) -> None:
     """The stack is up and OMERO accepts a root BlitzGateway login."""
     from omero.gateway import BlitzGateway
 
@@ -73,14 +76,17 @@ async def test_smoke_omero_root_login(backend_stack):
         conn.close()
 
 
-async def test_me_returns_authenticated_user(aexecute, omero_root_user):
+async def test_me_returns_authenticated_user(
+    aexecute: AExecute, omero_root_user: OmeroRootUser
+) -> None:
     await omero_root_user()
     res = await aexecute(ME)
     assert not res.errors, res.errors
+    assert res.data is not None
     assert res.data["me"]["username"]
 
 
-async def test_ensure_omero_user_stores_row(aexecute):
+async def test_ensure_omero_user_stores_row(aexecute: AExecute) -> None:
     res = await aexecute(
         ENSURE_OMERO_USER,
         {
@@ -93,6 +99,7 @@ async def test_ensure_omero_user_stores_row(aexecute):
         },
     )
     assert not res.errors, res.errors
+    assert res.data is not None
     assert res.data["ensureOmeroUser"]["omeroUsername"] == "root"
 
     from bridge.models import OmeroUser
@@ -100,7 +107,9 @@ async def test_ensure_omero_user_stores_row(aexecute):
     assert await OmeroUser.objects.filter(omero_username="root").aexists()
 
 
-async def test_create_project_then_list(aexecute, omero_root_user):
+async def test_create_project_then_list(
+    aexecute: AExecute, omero_root_user: OmeroRootUser
+) -> None:
     await omero_root_user()
     name = f"proj-{uuid.uuid4().hex[:8]}"
 
@@ -108,18 +117,23 @@ async def test_create_project_then_list(aexecute, omero_root_user):
         CREATE_PROJECT, {"input": {"name": name, "description": "d"}}
     )
     assert not created.errors, created.errors
+    assert created.data is not None
     assert created.data["createProject"]["name"] == name
 
     listed = await aexecute(LIST_PROJECTS, {"filters": {"search": name}})
     assert not listed.errors, listed.errors
+    assert listed.data is not None
     assert name in [p["name"] for p in listed.data["projects"]]
 
 
-async def test_create_dataset_under_project(aexecute, omero_root_user):
+async def test_create_dataset_under_project(
+    aexecute: AExecute, omero_root_user: OmeroRootUser
+) -> None:
     await omero_root_user()
     pname = f"proj-{uuid.uuid4().hex[:8]}"
     created_proj = await aexecute(CREATE_PROJECT, {"input": {"name": pname}})
     assert not created_proj.errors, created_proj.errors
+    assert created_proj.data is not None
     project_id = created_proj.data["createProject"]["id"]
 
     dname = f"ds-{uuid.uuid4().hex[:8]}"
@@ -127,24 +141,32 @@ async def test_create_dataset_under_project(aexecute, omero_root_user):
         CREATE_DATASET, {"input": {"projectId": project_id, "name": dname}}
     )
     assert not created_ds.errors, created_ds.errors
+    assert created_ds.data is not None
     assert created_ds.data["createDataset"]["name"] == dname
 
     listed = await aexecute(LIST_DATASETS, {"filters": {"search": dname}})
     assert not listed.errors, listed.errors
+    assert listed.data is not None
     assert dname in [d["name"] for d in listed.data["datasets"]]
 
 
-async def test_delete_nonexistent_image_errors_cleanly(aexecute, omero_root_user):
+async def test_delete_nonexistent_image_errors_cleanly(
+    aexecute: AExecute, omero_root_user: OmeroRootUser
+) -> None:
     """Deleting a bogus image id surfaces a GraphQL error, not a harness crash."""
     await omero_root_user()
     res = await aexecute(DELETE_IMAGE, {"input": {"id": "999999999"}})
     # Either OMERO reports an ERR (GraphQL error) — the path we care about is
     # that the resolver/extension wiring handled the live connection without
     # tearing down the test runner.
-    assert res.errors or res.data["deleteImage"]["id"] == "999999999"
+    assert res.errors or (
+        res.data is not None and res.data["deleteImage"]["id"] == "999999999"
+    )
 
 
-def test_thumbnail_view_requires_auth_and_handles_missing_image(client, backend_stack):
+def test_thumbnail_view_requires_auth_and_handles_missing_image(
+    client: Client, backend_stack: None
+) -> None:
     """The @omero_connected thumbnail view: bogus id → 404 (not 500/401).
 
     Sets up the OmeroUser synchronously (the Django test client is sync) for the

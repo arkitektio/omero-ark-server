@@ -1,5 +1,7 @@
 """ROI mutations, built on ezomero's shape dataclasses."""
 
+from typing import TypeAlias
+
 import ezomero
 import ezomero.rois as ez
 import strawberry
@@ -9,13 +11,18 @@ from bridge import inputs, types
 from bridge.conn import get_conn
 from bridge.gateway import delete_objects, get_object, hex_to_rgba_tuple
 
+#: The ezomero shapes ``post_roi`` takes.
+Shape: TypeAlias = (
+    ez.Point | ez.Line | ez.Rectangle | ez.Ellipse | ez.Polygon | ez.Polyline | ez.Label
+)
 
-def _set(value) -> bool:
+
+def _set(value: object) -> bool:
     """One-of input members that were not provided arrive as UNSET (or None); only a provided one counts."""
     return value is not None and value is not strawberry.UNSET
 
 
-def shape_from_input(shape: inputs.ShapeInput):
+def shape_from_input(shape: inputs.ShapeInput) -> Shape:
     """Translate one GraphQL shape input into the ezomero dataclass ``post_roi`` expects."""
     common = dict(
         z=shape.z,
